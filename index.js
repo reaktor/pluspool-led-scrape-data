@@ -3,7 +3,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const datagarrison = require('datagarrison')
-const { fetchNoaaData, fetchStationData } = require('./fetch')
+const { fetchNoaaData, fetchPier17Data, fetchCentralParkData } = require('./fetch')
 const { getSamples } = require('./data')
 
 const AWS = require('aws-sdk')
@@ -13,13 +13,14 @@ const s3 = new AWS.S3({
 })
 
 const uploadFile = async () => {
-  const rawStationData = await fetchStationData()
-  const stationData = datagarrison.parse(rawStationData)
-
-  const rawNoaaData = await fetchNoaaData()
-  const noaaData = rawNoaaData.data
-
-  const samples = getSamples({ noaaData, stationData })
+  const samples = await Promise.all([
+    fetchNoaaData,
+    fetchPier17Data,
+    fetchCentralParkData
+  ])
+    .then(([rawNoaaData, pier17Data centralParkData]) => {
+      return getSamples({ pier17Data, centralParkData, noaaData: rawNoaaData.data})
+    })
 
   const params = {
     Bucket: 'pluspool',

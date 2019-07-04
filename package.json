@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "aws-sdk": "^2.488.0",
-    "datagarrison": "^0.1.0",
+    "datagarrison": "^0.2.0",
     "dotenv": "^8.0.0",
     "isomorphic-unfetch": "^3.0.0",
     "jest": "^24.8.0",
