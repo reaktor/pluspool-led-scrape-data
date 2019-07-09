@@ -24,7 +24,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const reverseNoaaData = noaaData.slice().reverse()
   const endIndex = reverseNoaaData.length - reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
 
-  return noaaData.slice(startIndex, endIndex)
+  const samples = noaaData.slice(startIndex, endIndex)
     .map(sample => ({
       noaaTime: parseFloat(Date.parse(sample.t)),
       speed: parseFloat(sample.s),
@@ -44,15 +44,15 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     .map(sample => {
       const centralParkSample = deriveSample({ stationData: centralParkData, timestamp: sample.noaaTime })
 
-      const rain = parseFloat(centralParkSample['Rain_10680977_in'])
-
       return {
         ...sample,
         centralParkTime: parseInt(centralParkSample['Date_Time']),
-        rain: rain,
-        bacteria: rainToBacteria(rain)
+        rain: parseFloat(centralParkSample['Rain_10680977_in'])
       }
     })
+
+    const bacteria = rainToBacteria(samples.map(({rain}) => rain))
+    return samples.map((sample, index) => ({...sample, bacteria: bacteria[index]}))
 }
 
 /**
