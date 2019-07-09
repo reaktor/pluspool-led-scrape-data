@@ -2,7 +2,6 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
 
-const datagarrison = require('datagarrison')
 const { fetchNoaaData, fetchPier17Data, fetchCentralParkData } = require('./fetch')
 const { getSamples } = require('./data')
 
@@ -18,7 +17,7 @@ const uploadFile = async () => {
     fetchPier17Data,
     fetchCentralParkData
   ])
-    .then(([rawNoaaData, pier17Data centralParkData]) => {
+    .then(([pier17Data, centralParkData, rawNoaaData]) => {
       return getSamples({ pier17Data, centralParkData, noaaData: rawNoaaData.data})
     })
 
