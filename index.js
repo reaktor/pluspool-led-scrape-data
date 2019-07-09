@@ -13,9 +13,9 @@ const s3 = new AWS.S3({
 
 const uploadFile = async () => {
   const samples = await Promise.all([
-    fetchNoaaData,
     fetchPier17Data,
-    fetchCentralParkData
+    fetchCentralParkData,
+    fetchNoaaData
   ])
     .then(([pier17Data, centralParkData, rawNoaaData]) => {
       return getSamples({ pier17Data, centralParkData, noaaData: rawNoaaData.data})
