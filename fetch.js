@@ -1,14 +1,6 @@
-const { ENDPOINTS } = require('./constants')
+const { ENDPOINTS, STREAMS } = require('./constants')
 const fetch = require('isomorphic-unfetch')
-
-const fetchStationData = () => {
-  return fetch(ENDPOINTS.datagarrison).then(response => {
-    if (response.ok) {
-      return response.text()
-    }
-    throw new Error(`Request rejected with status ${response.status}`)
-  })
-}
+const { get } = require('datagarrison')
 
 const fetchNoaaData = () => {
   return fetch(ENDPOINTS.noaaCurrent, {
@@ -22,6 +14,7 @@ const fetchNoaaData = () => {
 }
 
 module.exports = {
-  fetchStationData,
-  fetchNoaaData
+  fetchNoaaData,
+  fetchPier17Data: () => get(STREAMS.pier17),
+  fetchCentralParkData: () => get(STREAMS.centralPark)
 }

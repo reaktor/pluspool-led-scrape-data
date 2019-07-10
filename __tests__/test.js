@@ -1,6 +1,30 @@
 const { getSamples } = require('../data')
 
-const stationData = {
+const centralParkData = {
+  'name': 'HOBO Weather Station - SN 8388608',
+  'timezone': 'UTC-300 minutes',
+  'header': [
+    'Date_Time',
+    'Pressure_10660975_in_Hg',
+    'carbon_9807985_ppm',
+    'carbon2_9807972_ppm',
+    'Rain_10680977_in',
+    'Solar Radiation_10612119_W/m^2',
+    'Temperature_10693502_deg_F',
+    'RH_10693502b_%'
+  ],
+  'samples': [
+    [1561999500000, 29.702, 358.643, 0.244, 0.000, 701.875, 84.811, 72.700], // Mon Jul 1 12:45:00
+    [1562000400000, 29.690, 359.619, 0.244, 0.000, 406.875, 85.216, 70.300], // Mon Jul 1 13:00:00
+    [1562001300000, 29.693, 359.131, 0.244, 0.000, 558.125, 84.901, 71.000], // Mon Jul 1 13:15:00
+    [1562002200000, 29.687, 356.201, 0.244, 0.071, 151.875, 84.093, 70.500], // Mon Jul 1 13:30:00
+    [1562003100000, 29.681, 365.967, 0.244, 0.000, 35.625, 81.554, 73.900], // Mon Jul 1 13:45:00
+    [1562004000000, 29.693, 367.920, 0.244, 0.000, 28.125, 78.602, 78.600], // Mon Jul 1 14:00:00
+    [1562004900000, 29.687, 372.314, 0.244, 0.071, 68.125, 75.550, 88.600] // Mon Jul 1 14:15:00
+  ]
+}
+
+const pier17Data = {
   'name': 'HOBO Weather Station - SN 8388608',
   'timezone': 'UTC-300 minutes',
   'header': [
@@ -98,7 +122,7 @@ const noaaData = [
 ]
 
 it('gets data', () => {
-  const samples = getSamples({ noaaData, stationData })
+  const samples = getSamples({ noaaData, pier17Data, centralParkData })
   const firstSample = samples[0]
   const lastSample = samples[samples.length - 1]
 
@@ -106,7 +130,8 @@ it('gets data', () => {
   expect(firstSample).toEqual(
     expect.objectContaining({
       noaaTime: 1562000400000,
-      stationTime: 1562000400000
+      pier17Time: 1562000400000,
+      centralParkTime: 1562000400000
     })
   )
 
@@ -114,7 +139,8 @@ it('gets data', () => {
   expect(lastSample).toEqual(
     expect.objectContaining({
       noaaTime: 1562002920000,
-      stationTime: 1562002200000
+      pier17Time: 1562002200000,
+      centralParkTime: 1562002200000
     })
   )
 
