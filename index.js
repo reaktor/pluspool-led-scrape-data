@@ -24,6 +24,7 @@ const uploadFile = async () => {
   const path = `${samples.date.toJSON()}.json`
   const json = JSON.stringify(samples, null, 2)
 
+  // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {
     const fs = require('fs')
     fs.writeFile(path, json, (err) => {
@@ -39,26 +40,19 @@ const uploadFile = async () => {
 
   const params = {
     Bucket: 'pluspool',
-    Key: path,
-    Body: json,
     ACL: 'public-read',
     ContentType: 'application/json'
   }
 
-  s3.upload(params, function (s3Err, data) {
+  // First upload as (new Date()).json
+  s3.upload({ ...params, Key: path, Body: json }, (s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`File uploaded successfully at ${data.Location}`)
 
-    const copyParams = {
-      Bucket: 'pluspool',
-      CopySource: data.Location,
-      Key: 'samples.json',
-      ACL: 'public-read',
-      ContentType: 'application/json'
-    }
-    s3.copyObject(copyParams, function (err, data) {
-      if (err) throw err
-      console.log(`copied to ${data.Location}`)
+    // Then copy to `samples.json`
+    s3.copyObject({ ...params, CopySource: data.Location, Key: 'samples.json' }, (s3Err, data) => {
+      if (s3Err) throw s3Err
+      console.log(`copied to '${data.Location}'`)
     })
   })
 }
