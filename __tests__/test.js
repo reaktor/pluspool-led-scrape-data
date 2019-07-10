@@ -122,7 +122,7 @@ const noaaData = [
 ]
 
 it('gets data', () => {
-  const samples = getSamples({ noaaData, pier17Data, centralParkData })
+  const { samples } = getSamples({ noaaData, pier17Data, centralParkData })
   const firstSample = samples[0]
   const lastSample = samples[samples.length - 1]
 
