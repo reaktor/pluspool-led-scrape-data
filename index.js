@@ -25,8 +25,15 @@ const uploadFile = async () => {
   const json = JSON.stringify(samples, null, 2)
 
   if (!accessKeyId || !secretAccessKey) {
-    require('fs').writeFileSync(path, json)
-    console.log(`File written to ${path}`)
+    const fs = require('fs')
+    fs.writeFile(path, json, (err) => {
+      if (err) throw err
+      console.log(`File written to ${path}`)
+      fs.writeFile('samples.json', json, (err) => {
+        if (err) throw err
+        console.log(`File written to samples.json`)
+      })
+    })
     return
   }
 
