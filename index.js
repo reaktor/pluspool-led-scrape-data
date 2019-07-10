@@ -41,11 +41,18 @@ const uploadFile = async () => {
   s3.upload(params, function (s3Err, data) {
     if (s3Err) throw s3Err
     console.log(`File uploaded successfully at ${data.Location}`)
-  })
 
-  s3.upload({ ...params, Key: 'sample.json' }, function (s3Err, data) {
-    if (s3Err) throw s3Err
-    console.log(`File uploaded successfully at ${data.Location}`)
+    const copyParams = {
+      Bucket: 'pluspool',
+      CopySource: data.Location,
+      Key: 'samples.json',
+      ACL: 'public-read',
+      ContentType: 'application/json'
+    }
+    s3.copyObject(copyParams, function (err, data) {
+      if (err) throw err
+      console.log(`copied to ${data.Location}`)
+    })
   })
 }
 
