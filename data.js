@@ -51,8 +51,12 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       }
     })
 
-    const bacteria = rainToBacteria(samples.map(({rain}) => rain))
-    return samples.map((sample, index) => ({...sample, bacteria: bacteria[index]}))
+  const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
+  return {
+    version: 1,
+    date: new Date(),
+    samples: samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
+  }
 }
 
 /**

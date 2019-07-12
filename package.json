@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@jedahan/predicted-mpn": "^0.1.0",
+    "@jedahan/predicted-mpn": "git@github.com:jedahan/predicted-mpn",
     "aws-sdk": "^2.488.0",
     "datagarrison": "^0.2.0",
     "dotenv": "^8.0.0",
