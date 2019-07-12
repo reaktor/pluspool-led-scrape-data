@@ -52,7 +52,7 @@ const uploadFile = async () => {
     // Then copy to `samples.json`
     s3.copyObject({ ...params, CopySource: data.Location, Key: 'samples.json' }, (s3Err, data) => {
       if (s3Err) throw s3Err
-      console.log(`copied to '${data.Location}'`)
+      console.log(`copied to 'samples.json'`)
     })
   })
 }
