@@ -35,10 +35,11 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       return {
         ...sample,
         pier17Time: parseInt(pier17Sample['Date_Time']),
-        oxygen: parseFloat(pier17Sample['Percent Oxygen_SDI_0_10_%']),
+        oxygen: parseFloat(pier17Sample['oxygen_%_SDI_0_10_%']),
         salinity: parseFloat(pier17Sample['Salinity_SDI_0_4_ppt']),
         turbidity: parseFloat(pier17Sample['Turbidity_SDI_0_8_NTU']),
-        ph: parseFloat(pier17Sample['pH mV_SDI_0_7_V'])
+        ph: parseFloat(pier17Sample['pH_SDI_0_6_H+']),
+        depth: parseFloat(pier17Sample['depth_SDI_0_5_m'])
       }
     })
     .map(sample => {
