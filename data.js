@@ -1,6 +1,7 @@
 /**
  * getSamples returns an array of samples
  * @param {Object} noaaData - raw noaaData
+ * @param {Object} pier17Data - raw pier17Data
  * @param {Object} stationData - raw stationData
  *
  * @returns {Object} Array of samples
@@ -10,10 +11,12 @@ const rainToBacteria = require('@jedahan/predicted-mpn')
 
 const maps = {
   noaaData: {
+    noaaTime: 't',
     speed: 's',
     direction: 'd'
   },
   pier17Data: {
+    pier17Time: 'Date_Time',
     oxygen: 'oxygen_%_SDI_0_10_%',
     salinity: 'Salinity_SDI_0_4_ppt',
     turbidity: 'Turbidity_SDI_0_8_NTU',
@@ -21,62 +24,72 @@ const maps = {
     depth: 'depth_SDI_0_5_m'
   },
   centralParkData: {
+    centralParkTime: 'Date_Time',
     rain: 'Rain_10680977_in'
   }
 }
 
 const getSource = (key, sourcemap) => {
-  if (!key) return 'somewhere out there...'
+  const defaultSource = 'somewhere out there...'
 
-  return Object.entries(maps).map((sourcename, map) => {
-    if (Object.keys(map).includes(key)) return sourcemap[sourcename]
-  })
+  if (!key) return defaultSource
+
+  for (let [sourcename, map] of Object.entries(maps)) {
+    if (Object.keys(map).includes(key)) {
+      return sourcemap[sourcename]
+    }
+  }
+  return defaultSource
 }
 
 // Select and rename an object with a map from another object
-const select = (source, map) => Object.entries(map).map((to, name) => ({ [to]: parseFloat(source[name]) }))
+const select = (source, map) => Object.assign(...Object.entries(map).map(([to, name]) => ({ [to]: parseFloat(source[name]) })))
 
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
-  const sourcemap = [noaaData, pier17Data, centralParkData].map(({ source }) => source)
+  const sourcemap = {
+    noaaData: noaaData.source,
+    pier17Data: pier17Data.source,
+    centralParkData: centralParkData.source
+  }
 
   const start = Math.max(
-    Date.parse(noaaData[0].t),
+    Date.parse(noaaData.data[0].t),
     pier17Data.samples[0][0],
     centralParkData.samples[0][0]
   )
   const end = Math.min(
-    Date.parse(noaaData[noaaData.length - 1].t),
+    Date.parse(noaaData.data[noaaData.data.length - 1].t),
     pier17Data.samples[pier17Data.samples.length - 2][0],
     centralParkData.samples[centralParkData.samples.length - 2][0]
   )
 
-  const startIndex = noaaData.findIndex(sample => Date.parse(sample.t) >= start)
-  const reverseNoaaData = noaaData.slice().reverse()
+  const startIndex = noaaData.data.findIndex(sample => Date.parse(sample.t) >= start)
+  const reverseNoaaData = noaaData.data.slice().reverse()
   const endIndex = reverseNoaaData.length - reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
 
-  const samples = noaaData.slice(startIndex, endIndex)
+  const samples = noaaData.data.slice(startIndex, endIndex)
     .map(sample => {
       const noaaSample = sample
       return {
-        noaaTime: parseFloat(Date.parse(noaaSample['t'])),
-        ...select(noaaData, maps.noaaData)
+        ...select(noaaSample, maps.noaaData),
+        noaaTime: parseFloat(Date.parse(noaaSample['t']))
       }
     })
     .map(sample => {
       const pier17Sample = deriveSample({ stationData: pier17Data, timestamp: sample.noaaTime })
       return {
-        pier17Time: parseInt(pier17Sample['Date_Time']),
         ...sample,
-        ...select(pier17Sample, maps.pier17Data)
+        ...select(pier17Sample, maps.pier17Data),
+        pier17Time: parseInt(pier17Sample['Date_Time'])
       }
     })
     .map(sample => {
       const centralParkSample = deriveSample({ stationData: centralParkData, timestamp: sample.noaaTime })
 
       return {
-        centralParkTime: parseInt(centralParkSample['Date_Time']),
         ...sample,
-        ...select(centralParkSample, maps.centralParkData)
+        ...select(centralParkSample, maps.centralParkData),
+        centralParkTime: parseInt(centralParkSample['Date_Time'])
       }
     })
 
@@ -87,8 +100,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const date = new Date()
 
   const sources = Object.assign(
-    ...Object.keys(samples[0])
-      .map(key => ({ key: getSource(key, sourcemap) }))
+    ...Object.keys(samples[0]).map(key => ({ [key]: getSource(key, sourcemap) }))
   )
 
   return {
