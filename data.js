@@ -13,22 +13,32 @@ const maps = {
     speed: 's',
     direction: 'd'
   },
-  pier17: {
+  pier17Data: {
     oxygen: 'oxygen_%_SDI_0_10_%',
     salinity: 'Salinity_SDI_0_4_ppt',
     turbidity: 'Turbidity_SDI_0_8_NTU',
     ph: 'pH_SDI_0_6_H+',
     depth: 'depth_SDI_0_5_m'
   },
-  centralPark: {
+  centralParkData: {
     rain: 'Rain_10680977_in'
   }
+}
+
+const getSource = (key, sourcemap) => {
+  if (!key) return 'somewhere out there...'
+
+  return maps.entries((sourcename, map) => {
+    if (map.keys().includes(key)) return sourcemap[sourcename]
+  })
 }
 
 // Select and rename an object with a map from another object
 const select = (source, map) => map.entries().map((to, name) => ({ [to]: parseFloat(source[name]) }))
 
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
+  const sourcemap = [noaaData, pier17Data, centralParkData].map(({ source }) => source)
+
   const start = Math.max(
     Date.parse(noaaData[0].t),
     pier17Data.samples[0][0],
@@ -71,9 +81,19 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     })
 
   const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
+
+  const version = 1
+
+  const date = new Date()
+
+  const sources = Object.assign(...samples[0].keys()
+    .map(key => ({ key: getSource(key, sourcemap) }))
+  )
+
   return {
-    version: 1,
-    date: new Date(),
+    version,
+    date,
+    sources,
     samples: samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
   }
 }
