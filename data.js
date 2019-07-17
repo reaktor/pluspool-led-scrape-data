@@ -28,13 +28,13 @@ const maps = {
 const getSource = (key, sourcemap) => {
   if (!key) return 'somewhere out there...'
 
-  return maps.entries((sourcename, map) => {
-    if (map.keys().includes(key)) return sourcemap[sourcename]
+  return Object.entries(maps).map((sourcename, map) => {
+    if (Object.keys(map).includes(key)) return sourcemap[sourcename]
   })
 }
 
 // Select and rename an object with a map from another object
-const select = (source, map) => map.entries().map((to, name) => ({ [to]: parseFloat(source[name]) }))
+const select = (source, map) => Object.entries(map).map((to, name) => ({ [to]: parseFloat(source[name]) }))
 
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const sourcemap = [noaaData, pier17Data, centralParkData].map(({ source }) => source)
@@ -86,8 +86,9 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
 
   const date = new Date()
 
-  const sources = Object.assign(...samples[0].keys()
-    .map(key => ({ key: getSource(key, sourcemap) }))
+  const sources = Object.assign(
+    ...Object.keys(samples[0])
+      .map(key => ({ key: getSource(key, sourcemap) }))
   )
 
   return {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A node app that pulls in noaa api and a datagarrison stream to create a unified data file and uploads to S3.",
   "private": true,
-  "main": "data.js",
+  "main": "index.js",
   "scripts": {
     "lint": "standard",
     "lint:fix": "standard --fix",
