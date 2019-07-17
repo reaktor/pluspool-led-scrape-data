@@ -8,6 +8,26 @@
 
 const rainToBacteria = require('@jedahan/predicted-mpn')
 
+const maps = {
+  noaaData: {
+    speed: 's',
+    direction: 'd'
+  },
+  pier17: {
+    oxygen: 'oxygen_%_SDI_0_10_%',
+    salinity: 'Salinity_SDI_0_4_ppt',
+    turbidity: 'Turbidity_SDI_0_8_NTU',
+    ph: 'pH_SDI_0_6_H+',
+    depth: 'depth_SDI_0_5_m'
+  },
+  centralPark: {
+    rain: 'Rain_10680977_in'
+  }
+}
+
+// Select and rename an object with a map from another object
+const select = (source, map) => map.entries().map((to, name) => ({ [to]: parseFloat(source[name]) }))
+
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const start = Math.max(
     Date.parse(noaaData[0].t),
@@ -25,30 +45,28 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const endIndex = reverseNoaaData.length - reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
 
   const samples = noaaData.slice(startIndex, endIndex)
-    .map(sample => ({
-      noaaTime: parseFloat(Date.parse(sample.t)),
-      speed: parseFloat(sample.s),
-      direction: parseInt(sample.d)
-    }))
+    .map(sample => {
+      const noaaSample = sample
+      return {
+        noaaTime: parseFloat(Date.parse(noaaSample['t'])),
+        ...select(noaaData, maps.noaaData)
+      }
+    })
     .map(sample => {
       const pier17Sample = deriveSample({ stationData: pier17Data, timestamp: sample.noaaTime })
       return {
-        ...sample,
         pier17Time: parseInt(pier17Sample['Date_Time']),
-        oxygen: parseFloat(pier17Sample['oxygen_%_SDI_0_10_%']),
-        salinity: parseFloat(pier17Sample['Salinity_SDI_0_4_ppt']),
-        turbidity: parseFloat(pier17Sample['Turbidity_SDI_0_8_NTU']),
-        ph: parseFloat(pier17Sample['pH_SDI_0_6_H+']),
-        depth: parseFloat(pier17Sample['depth_SDI_0_5_m'])
+        ...sample,
+        ...select(pier17Sample, maps.pier17Data)
       }
     })
     .map(sample => {
       const centralParkSample = deriveSample({ stationData: centralParkData, timestamp: sample.noaaTime })
 
       return {
-        ...sample,
         centralParkTime: parseInt(centralParkSample['Date_Time']),
-        rain: parseFloat(centralParkSample['Rain_10680977_in'])
+        ...sample,
+        ...select(centralParkSample, maps.centralParkData)
       }
     })
 
@@ -87,5 +105,6 @@ const deriveSample = ({ stationData, timestamp }) => {
 }
 
 module.exports = {
-  getSamples
+  getSamples,
+  maps
 }
