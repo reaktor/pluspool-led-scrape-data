@@ -1,3 +1,4 @@
 .env
-
+*json.gz
+samples.json
 node_modules
