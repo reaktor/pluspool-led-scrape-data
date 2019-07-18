@@ -3,7 +3,8 @@ const fetch = require('isomorphic-unfetch')
 const { get } = require('datagarrison')
 
 const fetchNoaaData = () => {
-  return fetch(ENDPOINTS.noaaCurrent, {
+  const source = ENDPOINTS.noaaCurrent
+  return fetch(source, {
     method: 'GET'
   }).then(response => {
     if (response.ok) {
@@ -11,10 +12,11 @@ const fetchNoaaData = () => {
     }
     throw new Error(`Request rejected with status ${response.status}`)
   })
-  .then(json => ({
-    ...json,
-    data: json.data.map(datum => ({ ...datum, t: `${datum.t} GMT`}))
-  }))
+    .then(json => ({
+      ...json,
+      source,
+      data: json.data.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
+    }))
 }
 
 module.exports = {

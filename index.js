@@ -17,8 +17,8 @@ const uploadFile = async () => {
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData())
   ])
-    .then(([rawNoaaData, pier17Data, centralParkData]) => {
-      return getSamples({ pier17Data, centralParkData, noaaData: rawNoaaData.data })
+    .then(([noaaData, pier17Data, centralParkData]) => {
+      return getSamples({ noaaData, pier17Data, centralParkData })
     })
 
   const path = `${samples.date.toJSON()}.json`
