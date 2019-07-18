@@ -7,6 +7,7 @@
  * @returns {Object} Array of samples
  */
 
+const pkg = require('./package.json')
 const rainToBacteria = require('@jedahan/predicted-mpn')
 
 const maps = {
@@ -95,7 +96,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
 
   return {
-    version: 1,
+    version: pkg.version,
     date: new Date(),
     sources: Object.assign(...Object.keys(samples[0]).map(key => ({ [key]: getSource(key, sourcemap) }))),
     samples: samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
