@@ -35,10 +35,9 @@ const getSource = (key, sourcemap) => {
   if (!key) return defaultSource
 
   for (let [sourcename, map] of Object.entries(maps)) {
-    if (Object.keys(map).includes(key)) {
-      return sourcemap[sourcename]
-    }
+    if (Object.keys(map).includes(key)) return sourcemap[sourcename]
   }
+
   return defaultSource
 }
 
@@ -95,18 +94,10 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
 
   const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
 
-  const version = 1
-
-  const date = new Date()
-
-  const sources = Object.assign(
-    ...Object.keys(samples[0]).map(key => ({ [key]: getSource(key, sourcemap) }))
-  )
-
   return {
-    version,
-    date,
-    sources,
+    version: 1,
+    date: new Date(),
+    sources: Object.assign(...Object.keys(samples[0]).map(key => ({ [key]: getSource(key, sourcemap) }))),
     samples: samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
   }
 }
