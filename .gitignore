@@ -1,4 +1,5 @@
 .env
 *json.gz
+20[0-9][0-9]*json
 samples.json
 node_modules
