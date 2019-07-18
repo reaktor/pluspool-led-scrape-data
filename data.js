@@ -94,12 +94,16 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     })
 
   const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
+  const samplesWithBacteria = samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
+
+  const allKeys = [...new Set(...samplesWithBacteria.map(Object.keys))]
+  const sources = Object.assign({}, ...allKeys.map(key => ({ [key]: getSource(key, sourcemap) })))
 
   return {
     version: pkg.version,
     date: new Date(),
-    sources: Object.assign(...Object.keys(samples[0]).map(key => ({ [key]: getSource(key, sourcemap) }))),
-    samples: samples.map((sample, index) => ({ ...sample, bacteria: bacteria[index] }))
+    sources: sources,
+    samples: samplesWithBacteria
   }
 }
 
