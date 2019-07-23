@@ -41,7 +41,8 @@ const uploadFile = async () => {
   const params = {
     Bucket: 'pluspool',
     ACL: 'public-read',
-    ContentType: 'application/json'
+    ContentType: 'application/json',
+    ContentDisposition: 'attachment'
   }
 
   // First upload as (new Date()).json
