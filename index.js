@@ -2,6 +2,7 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
 
+const pako = require('pako')
 const { fetchNoaaData, fetchPier17Data, fetchCentralParkData } = require('./fetch')
 const { getSamples } = require('./data')
 
@@ -22,15 +23,17 @@ const uploadFile = async () => {
     })
 
   const path = `${samples.date.toJSON()}.json`
+  const gzpath = `${path}.gz`
   const json = JSON.stringify(samples, null, 2)
+  const gzip = pako.deflate(json, { gzip: true })
 
   // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {
     const fs = require('fs')
-    fs.writeFile(path, json, (err) => {
+    fs.writeFile(gzpath, gzip, (err) => {
       if (err) throw err
       console.log(`File written to ${path}`)
-      fs.writeFile('samples.json', json, (err) => {
+      fs.copyFile(gzpath, 'samples.json.gz', (err) => {
         if (err) throw err
         console.log(`File written to samples.json`)
       })
@@ -46,7 +49,7 @@ const uploadFile = async () => {
   }
 
   // First upload as (new Date()).json
-  s3.upload({ ...params, Key: path, Body: json }, (s3Err, data) => {
+  s3.upload({ ...params, Key: path, Body: gzip }, (s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`File uploaded successfully at ${data.Location}`)
 
