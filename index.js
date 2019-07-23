@@ -22,20 +22,19 @@ const uploadFile = async () => {
       return getSamples({ noaaData, pier17Data, centralParkData })
     })
 
-  const path = `${samples.date.toJSON()}.json`
-  const gzpath = `${path}.gz`
-  const json = JSON.stringify(samples, null, 2)
-  const gzip = pako.deflate(json, { gzip: true })
+  const path = `samples.json.gz`
+  const archivePath = path.replace('samples', samples.date.toJSON())
+  const json = pako.gzip(JSON.stringify(samples, null, 2))
 
   // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {
     const fs = require('fs')
-    fs.writeFile(gzpath, gzip, (err) => {
+    fs.writeFile(path, json, (err) => {
       if (err) throw err
-      console.log(`File written to ${path}`)
-      fs.copyFile(gzpath, 'samples.json.gz', (err) => {
+      console.log(`Samples written to '${path}'`)
+      fs.copyFile(path, archivePath, (err) => {
         if (err) throw err
-        console.log(`File written to samples.json`)
+        console.log(`copied to '${archivePath}'`)
       })
     })
     return
@@ -45,18 +44,19 @@ const uploadFile = async () => {
     Bucket: 'pluspool',
     ACL: 'public-read',
     ContentType: 'application/json',
-    ContentDisposition: 'attachment'
+    ContentDisposition: 'attachment',
+    ContentEncoding: 'gzip'
   }
 
   // First upload as (new Date()).json
-  s3.upload({ ...params, Key: path, Body: gzip }, (s3Err, data) => {
+  s3.upload({ ...params, Key: path, Body: Buffer.from(json, 'utf-8') }, (s3Err, data) => {
     if (s3Err) throw s3Err
-    console.log(`File uploaded successfully at ${data.Location}`)
+    console.log(`Samples uploaded to ${data.Location}`)
 
     // Then copy to `samples.json`
-    s3.copyObject({ ...params, CopySource: data.Location, Key: 'samples.json' }, (s3Err, data) => {
+    s3.copyObject({ ...params, CopySource: data.Location, Key: archivePath }, (s3Err, data) => {
       if (s3Err) throw s3Err
-      console.log(`copied to 'samples.json'`)
+      console.log(`copied to '${archivePath}'`)
     })
   })
 }
