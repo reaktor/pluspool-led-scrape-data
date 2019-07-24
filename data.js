@@ -57,7 +57,7 @@ const getSource = (key, sourcemap) => {
 
   if (!key) return defaultSource
 
-  for (let [sourcename, map] of Object.entries(maps)) {
+  for (const [sourcename, map] of Object.entries(maps)) {
     if (Object.keys(map).includes(key)) return sourcemap[sourcename]
   }
 
