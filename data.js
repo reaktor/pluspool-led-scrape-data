@@ -22,7 +22,8 @@ const maps = {
     salinity: 'Salinity_SDI_0_4_ppt',
     turbidity: 'Turbidity_SDI_0_8_NTU',
     ph: 'pH_SDI_0_6_H+',
-    depth: 'depth_SDI_0_5_m'
+    depth: 'depth_SDI_0_5_m',
+    temperature: 'water temperature_SDI_0_2_F'
   },
   centralParkData: {
     centralParkTime: 'Date_Time',
