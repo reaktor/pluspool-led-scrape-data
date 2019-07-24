@@ -33,7 +33,7 @@ const maps = {
 
 const units = {
   noaaTime: 'unix',
-  speed: 'm/s',
+  speed: 'KN',
   direction: 'degrees',
   pier17Time: 'unix',
   oxygen: '%',
