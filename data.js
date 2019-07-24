@@ -32,24 +32,19 @@ const maps = {
 }
 
 const units = {
-  noaaData: {
-    noaaTime: 'unix',
-    speed: 'm/s',
-    direction: 'degrees'
-  },
-  pier17Data: {
-    pier17Time: 'unix',
-    oxygen: '%',
-    salinity: 'PPT',
-    turbidity: 'NTU',
-    ph: 'H+',
-    depth: 'm',
-    temperature: 'F'
-  },
-  centralParkData: {
-    centralParkTime: 'unix',
-    rain: 'in'
-  }
+  noaaTime: 'unix',
+  speed: 'm/s',
+  direction: 'degrees',
+  pier17Time: 'unix',
+  oxygen: '%',
+  salinity: 'PPT',
+  turbidity: 'NTU',
+  ph: 'H+',
+  depth: 'm',
+  temperature: 'F',
+  centralParkTime: 'unix',
+  rain: 'in',
+  bacteria: 'MPN'
 }
 
 const getSource = (key, sourcemap) => {
