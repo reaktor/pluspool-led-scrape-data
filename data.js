@@ -31,6 +31,27 @@ const maps = {
   }
 }
 
+const units = {
+  noaaData: {
+    noaaTime: 'unix',
+    speed: 'm/s',
+    direction: 'degrees'
+  },
+  pier17Data: {
+    pier17Time: 'unix',
+    oxygen: '%',
+    salinity: 'PPT',
+    turbidity: 'NTU',
+    ph: 'H+',
+    depth: 'm',
+    temperature: 'F'
+  },
+  centralParkData: {
+    centralParkTime: 'unix',
+    rain: 'in'
+  }
+}
+
 const getSource = (key, sourcemap) => {
   const defaultSource = 'somewhere out there...'
 
@@ -104,6 +125,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     version: pkg.version,
     date: new Date(),
     sources: sources,
+    units: units,
     samples: samplesWithBacteria
   }
 }
