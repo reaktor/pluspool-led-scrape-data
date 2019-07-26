@@ -22,7 +22,8 @@ const maps = {
     salinity: 'Salinity_SDI_0_4_ppt',
     turbidity: 'Turbidity_SDI_0_8_NTU',
     ph: 'pH_SDI_0_6_H+',
-    depth: 'depth_SDI_0_5_m'
+    depth: 'depth_SDI_0_5_m',
+    temperature: 'water temperature_SDI_0_2_F'
   },
   centralParkData: {
     centralParkTime: 'Date_Time',
@@ -30,12 +31,28 @@ const maps = {
   }
 }
 
+const units = {
+  noaaTime: 'unix',
+  speed: 'KN',
+  direction: 'degrees',
+  pier17Time: 'unix',
+  oxygen: '%',
+  salinity: 'PPT',
+  turbidity: 'NTU',
+  ph: 'H+',
+  depth: 'm',
+  temperature: 'F',
+  centralParkTime: 'unix',
+  rain: 'in',
+  bacteria: 'MPN'
+}
+
 const getSource = (key, sourcemap) => {
   const defaultSource = 'somewhere out there...'
 
   if (!key) return defaultSource
 
-  for (let [sourcename, map] of Object.entries(maps)) {
+  for (const [sourcename, map] of Object.entries(maps)) {
     if (Object.keys(map).includes(key)) return sourcemap[sourcename]
   }
 
@@ -103,6 +120,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     version: pkg.version,
     date: new Date(),
     sources: sources,
+    units: units,
     samples: samplesWithBacteria
   }
 }

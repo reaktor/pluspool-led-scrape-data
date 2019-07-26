@@ -1,9 +1,9 @@
 const { getSamples } = require('../data')
 
 const centralParkData = {
-  'name': 'HOBO Weather Station - SN 8388608',
-  'timezone': 'UTC-300 minutes',
-  'header': [
+  name: 'HOBO Weather Station - SN 8388608',
+  timezone: 'UTC-300 minutes',
+  header: [
     'Date_Time',
     'Pressure_10660975_in_Hg',
     'carbon_9807985_ppm',
@@ -13,7 +13,7 @@ const centralParkData = {
     'Temperature_10693502_deg_F',
     'RH_10693502b_%'
   ],
-  'samples': [
+  samples: [
     [1561999500000, 29.702, 358.643, 0.244, 0.000, 701.875, 84.811, 72.700], // Mon Jul 1 12:45:00
     [1562000400000, 29.690, 359.619, 0.244, 0.000, 406.875, 85.216, 70.300], // Mon Jul 1 13:00:00
     [1562001300000, 29.693, 359.131, 0.244, 0.000, 558.125, 84.901, 71.000], // Mon Jul 1 13:15:00
@@ -25,9 +25,9 @@ const centralParkData = {
 }
 
 const pier17Data = {
-  'name': 'HOBO Weather Station - SN 8388608',
-  'timezone': 'UTC-300 minutes',
-  'header': [
+  name: 'HOBO Weather Station - SN 8388608',
+  timezone: 'UTC-300 minutes',
+  header: [
     'Date_Time',
     'Pressure_10096011_mbar',
     'Water Temperature_SDI_0_2_F',
@@ -43,7 +43,7 @@ const pier17Data = {
     'Battery_SDI_0_12_volts',
     'Corrected Depth_SDI_0_12_m'
   ],
-  'samples': [
+  samples: [
     [1562000400000, 1020, 73.75, 11, 6.25, 2.162, 7.13, -52.8, 10, 3.9, 70, 5.77, 11.1, 2.09], // Mon Jul 01 2019 13:00:00
     [1562001300000, 1020, 73.75, 11, 6.25, 2.162, 7.13, -52.8, 10, 3.9, 70, 5.77, 11.1, 2.09], // Mon Jul 01 2019 13:15:00
     [1562002200000, 1021, 73.75, 11, 6.25, 2.162, 7.13, -52.8, 10, 3.9, 70, 5.77, 11.1, 2.09], // Mon Jul 01 2019 13:30:00
