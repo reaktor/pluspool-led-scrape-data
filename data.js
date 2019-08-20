@@ -48,7 +48,7 @@ const units = {
 }
 
 const getSource = (key, sourcemap) => {
-  const defaultSource = 'somewhere out there...'
+  const defaultSource = 'https://www.ldeo.columbia.edu/user/mcgillis'
 
   if (!key) return defaultSource
 
