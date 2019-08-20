@@ -18,7 +18,7 @@ const maps = {
   },
   pier17Data: {
     pier17Time: 'Date_Time',
-    oxygen: 'oxygen_%_SDI_0_10_%',
+    oxygen: 'oxygen_conc_SDI_0_11_mg/L',
     salinity: 'Salinity_SDI_0_4_ppt',
     turbidity: 'Turbidity_SDI_0_8_NTU',
     ph: 'pH_SDI_0_6_H+',
@@ -36,7 +36,7 @@ const units = {
   speed: 'KN',
   direction: 'degrees',
   pier17Time: 'unix',
-  oxygen: '%',
+  oxygen: 'mg/L',
   salinity: 'PPT',
   turbidity: 'NTU',
   ph: 'H+',
