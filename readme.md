@@ -18,9 +18,20 @@ Ensure that the S3 bucket you are using has this CORS configuration in order for
 </CORSConfiguration>
 ```
 
-# Running
+# Running once
 
 ```
-source .env
-node index.js
+$ cd pluspool-led-scrape-data && source .env && node index.js
+```
+
+# Running every 6 minutes
+
+Create crontab file using command and file contents below
+
+```
+$ crontab -e
+```
+
+```
+*/6     *       *       *       *       cd pluspool-led-scrape-data && source .env && node index.js
 ```
