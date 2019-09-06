@@ -1,5 +1,15 @@
 const ENDPOINTS = {
-  noaaCurrent: 'https://tidesandcurrents.noaa.gov/api/datagetter?range=2400&station=n03020&product=currents&units=english&time_zone=gmt&&format=json'
+  noaaCurrent: {
+    url: 'https://tidesandcurrents.noaa.gov/api/datagetter',
+    query: {
+      range: '2400',
+      station: 'n03020',
+      product: 'currents',
+      units: 'english',
+      time_zone: 'gmt',
+      format: 'json'
+    }
+  }
 }
 
 const STREAMS = {

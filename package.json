@@ -1,6 +1,6 @@
 {
-  "name": "data-process",
-  "version": "1.1.0",
+  "name": "pluspool-led-scrape-data",
+  "version": "1.2.0",
   "description": "A node app that pulls in noaa api and a datagarrison stream to create a unified data file and uploads to S3.",
   "private": true,
   "main": "index.js",
@@ -11,13 +11,13 @@
   },
   "devDependencies": {
     "@jedahan/predicted-mpn": "git@github.com:jedahan/predicted-mpn",
-    "aws-sdk": "^2.494.0",
-    "datagarrison": "^1.2.1",
-    "dotenv": "^8.0.0",
+    "aws-sdk": "^2.524.0",
+    "datagarrison": "^2.0.0",
+    "dotenv": "^8.1.0",
     "isomorphic-unfetch": "^3.0.0",
-    "jest": "^24.8.0",
+    "jest": "^24.9.0",
     "pako": "^1.0.10",
-    "standard": "^13.1.0"
+    "standard": "^14.1.0"
   },
   "standard": {
     "env": [

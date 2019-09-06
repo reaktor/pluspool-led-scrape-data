@@ -1,9 +1,12 @@
 const { ENDPOINTS, STREAMS } = require('./constants')
 const fetch = require('isomorphic-unfetch')
 const { get } = require('datagarrison')
+const { encode } = require('querystring')
 
 const fetchNoaaData = () => {
-  const source = ENDPOINTS.noaaCurrent
+  const { url, query } = ENDPOINTS.noaaCurrent
+  const source = `${url}?${encode(query)}`
+
   return fetch(source, {
     method: 'GET'
   }).then(response => {

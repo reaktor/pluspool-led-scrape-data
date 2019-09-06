@@ -23,7 +23,7 @@ const uploadFile = async () => {
       return getSamples({ noaaData, pier17Data, centralParkData })
     })
 
-  const path = `samples.json.gz`
+  const path = 'samples.json.gz'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = pako.gzip(JSON.stringify(samples, null, 2))
 

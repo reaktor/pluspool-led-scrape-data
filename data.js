@@ -89,7 +89,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       const noaaSample = sample
       return {
         ...select(noaaSample, maps.noaaData),
-        noaaTime: parseFloat(Date.parse(noaaSample['t']))
+        noaaTime: parseInt(Date.parse(`${noaaSample.t} GMT`))
       }
     })
     .map(sample => {
@@ -97,7 +97,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       return {
         ...sample,
         ...select(pier17Sample, maps.pier17Data),
-        pier17Time: parseInt(pier17Sample['Date_Time'])
+        pier17Time: parseInt(pier17Sample.Date_Time)
       }
     })
     .map(sample => {
@@ -106,7 +106,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       return {
         ...sample,
         ...select(centralParkSample, maps.centralParkData),
-        centralParkTime: parseInt(centralParkSample['Date_Time'])
+        centralParkTime: parseInt(centralParkSample.Date_Time)
       }
     })
 
@@ -130,7 +130,6 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
  * @param {Object} stationData - Data retrieved from the Datagarrison weather station.
  * @param {Array} stationData.header - A list of labels for each column of data.
  * @param {Array} stationData.samples - The data samples.
- * @param {string} stationData.timezone - Timezone for data
  * @param {Date} timestamp - timestamp to get data
  * @returns {Object} A sample of data.
  */
