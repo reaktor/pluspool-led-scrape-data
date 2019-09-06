@@ -54,11 +54,27 @@ const uploadFile = async () => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
-    // Then copy to `samples.json`
+    // Then copy to `samples.json.gz`
     s3.copyObject({ ...params, CopySource: data.Location, Key: archivePath }, (s3Err, data) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
     })
+  })
+
+  // Upload latest as latest.samples.json
+  const latestSamples = {...samples, samples: samples.samples.slice(0, 100)}
+
+  const latestParams = {
+    Bucket: bucket,
+    ACL: 'public-read',
+    ContentType: 'application/json',
+    Key: 'latest.samples.json',
+    Body: Buffer.from(JSON.stringify(latestSamples, null, 2), 'utf-8')
+  }
+
+  s3.upload(latestParams, (s3Err, data) => {
+    if (s3Err) throw s3Err
+    console.log(`Latest samples uploaded to ${data.Location}`)
   })
 }
 
