@@ -89,7 +89,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       const noaaSample = sample
       return {
         ...select(noaaSample, maps.noaaData),
-        noaaTime: parseInt(Date.parse(`${noaaSample.t} GMT`))
+        noaaTime: Date.parse(noaaSample.t)
       }
     })
     .map(sample => {
