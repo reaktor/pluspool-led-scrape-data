@@ -119,6 +119,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   return {
     version: pkg.version,
     date: new Date(),
+    envName: process.env.ENV_NAME || 'undefined',
     sources: sources,
     units: units,
     samples: samplesWithBacteria

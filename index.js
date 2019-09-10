@@ -14,6 +14,8 @@ const AWS = require('aws-sdk')
 const s3 = new AWS.S3({ accessKeyId, secretAccessKey })
 
 const uploadFile = async () => {
+  console.log('Upload started')
+
   const samples = await Promise.all([
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
@@ -62,7 +64,9 @@ const uploadFile = async () => {
   })
 
   // Upload latest as latest.samples.json
-  const latestSamples = {...samples, samples: samples.samples.slice(0, 100)}
+  const samplesLength = samples.samples.length
+  const latestLength = 100
+  const latestSamples = {...samples, samples: samples.samples.slice(samplesLength - latestLength, samplesLength)}
 
   const latestParams = {
     Bucket: bucket,
