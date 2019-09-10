@@ -25,7 +25,7 @@ const uploadFile = async () => {
       return getSamples({ noaaData, pier17Data, centralParkData })
     })
 
-  const path = 'samples.json.gz'
+  const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = pako.gzip(JSON.stringify(samples, null, 2))
 
@@ -56,7 +56,7 @@ const uploadFile = async () => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
-    // Then copy to `samples.json.gz`
+    // Then copy to `samples.json`
     s3.copyObject({ ...params, CopySource: data.Location, Key: archivePath }, (s3Err, data) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
