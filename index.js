@@ -14,20 +14,20 @@ const AWS = require('aws-sdk')
 const s3 = new AWS.S3({ accessKeyId, secretAccessKey })
 
 const uploadFile = async () => {
-  console.log('Upload started')
-
   const samples = await Promise.all([
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData())
   ])
     .then(([noaaData, pier17Data, centralParkData]) => {
+      console.log('Data fetching complete')
       return getSamples({ noaaData, pier17Data, centralParkData })
     })
 
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
-  const json = pako.gzip(JSON.stringify(samples, null, 2))
+  const json = JSON.stringify(samples, null, 2)
+  const gzipJson = pako.gzip(json)
 
   // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {
@@ -52,7 +52,7 @@ const uploadFile = async () => {
   }
 
   // First upload as (new Date()).json
-  s3.upload({ ...params, Key: path, Body: Buffer.from(json, 'utf-8') }, (s3Err, data) => {
+  s3.upload({ ...params, Key: path, Body: Buffer.from(gzipJson, 'utf-8') }, (s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
@@ -66,7 +66,7 @@ const uploadFile = async () => {
   // Upload latest as latest.samples.json
   const samplesLength = samples.samples.length
   const latestLength = 100
-  const latestSamples = {...samples, samples: samples.samples.slice(samplesLength - latestLength, samplesLength)}
+  const latestSamples = { ...samples, samples: samples.samples.slice(samplesLength - latestLength, samplesLength) }
 
   const latestParams = {
     Bucket: bucket,

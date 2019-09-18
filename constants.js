@@ -22,6 +22,7 @@ const STREAMS = {
     stream: 356136071740874
   }
 }
+
 module.exports = {
   ENDPOINTS,
   STREAMS

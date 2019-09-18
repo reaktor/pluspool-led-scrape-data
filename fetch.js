@@ -4,6 +4,7 @@ const { get } = require('datagarrison')
 const { encode } = require('querystring')
 
 const fetchNoaaData = () => {
+  console.log('Fetching NOAA data')
   const { url, query } = ENDPOINTS.noaaCurrent
   const source = `${url}?${encode(query)}`
 
@@ -22,8 +23,18 @@ const fetchNoaaData = () => {
     }))
 }
 
+const fetchPier17Data = () => {
+  console.log('Fetching Pier 17 data')
+  return get(STREAMS.pier17)
+}
+
+const fetchCentralParkData = () => {
+  console.log('Fetching Central Park data')
+  return get(STREAMS.centralPark)
+}
+
 module.exports = {
   fetchNoaaData,
-  fetchPier17Data: () => get(STREAMS.pier17),
-  fetchCentralParkData: () => get(STREAMS.centralPark)
+  fetchPier17Data,
+  fetchCentralParkData
 }
