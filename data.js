@@ -28,6 +28,9 @@ const maps = {
   centralParkData: {
     centralParkTime: 'Date_Time',
     rain: 'Rain_10680977_in'
+  },
+  columbia: {
+    bacteria: 'bacteria'
   }
 }
 
@@ -48,25 +51,25 @@ const units = {
 }
 
 const getSource = (key, sourcemap) => {
-  const defaultSource = 'https://www.ldeo.columbia.edu/user/mcgillis'
-
-  if (!key) return defaultSource
+  if (key === 'bacteria') return 'https://www.ldeo.columbia.edu/user/mcgillis'
 
   for (const [sourcename, map] of Object.entries(maps)) {
     if (Object.keys(map).includes(key)) return sourcemap[sourcename]
   }
 
-  return defaultSource
+  return null
 }
 
 // Select and rename an object with a map from another object
 const select = (source, map) => Object.assign(...Object.entries(map).map(([to, name]) => ({ [to]: parseFloat(source[name]) })))
 
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
+  console.log('Converting fetched data to samples')
   const sourcemap = {
-    noaaData: noaaData.source,
+    noaaData: 'https://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020&bin=0&unit=1&timeZone=UTC&view=data',
     pier17Data: pier17Data.source,
-    centralParkData: centralParkData.source
+    centralParkData: centralParkData.source,
+    columbia: 'https://www.ldeo.columbia.edu/user/mcgillis'
   }
 
   const start = Math.max(
@@ -115,6 +118,8 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
 
   const allKeys = [...new Set(...samplesWithBacteria.map(Object.keys))]
   const sources = Object.assign({}, ...allKeys.map(key => ({ [key]: getSource(key, sourcemap) })))
+
+  console.log('Converting samples complete')
 
   return {
     version: pkg.version,
