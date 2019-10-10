@@ -15,7 +15,7 @@ const ENDPOINTS = {
 const STREAMS = {
   pier17: {
     user: 1105898,
-    stream: 351579054854805
+    stream: 351579054854409
   },
   centralPark: {
     user: 1105898,
