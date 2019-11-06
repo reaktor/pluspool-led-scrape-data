@@ -3,15 +3,26 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pako = require('pako')
-const { fetchNoaaData, fetchPier17Data, fetchCentralParkData } = require('./fetch')
-const { getSamples } = require('./data')
+const {
+  fetchNoaaData,
+  fetchPier17Data,
+  fetchCentralParkData
+} = require('./fetch')
+const {
+  getSamples,
+  storeRawData,
+  getDataSets
+} = require('./data')
 
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
 const bucket = process.env.AWS_BUCKET
 
 const AWS = require('aws-sdk')
-const s3 = new AWS.S3({ accessKeyId, secretAccessKey })
+const s3 = new AWS.S3({
+  accessKeyId,
+  secretAccessKey
+})
 
 const uploadFile = async () => {
   const samples = await Promise.all([
@@ -21,9 +32,14 @@ const uploadFile = async () => {
   ])
     .then(([noaaData, pier17Data, centralParkData]) => {
       console.log('Data fetching complete')
-      return getSamples({ noaaData, pier17Data, centralParkData })
+      return storeRawData({
+        noaaData,
+        pier17Data,
+        centralParkData
+      })
     })
-
+  console.log('samples done', samples)
+  const dataSets = getDataSets()
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = JSON.stringify(samples, null, 2)
@@ -52,12 +68,20 @@ const uploadFile = async () => {
   }
 
   // First upload as (new Date()).json
-  s3.upload({ ...params, Key: path, Body: Buffer.from(gzipJson, 'utf-8') }, (s3Err, data) => {
+  s3.upload({
+    ...params,
+    Key: path,
+    Body: Buffer.from(gzipJson, 'utf-8')
+  }, (s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
     // Then copy to `samples.json`
-    s3.copyObject({ ...params, CopySource: data.Location, Key: archivePath }, (s3Err, data) => {
+    s3.copyObject({
+      ...params,
+      CopySource: data.Location,
+      Key: archivePath
+    }, (s3Err, data) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
     })
@@ -66,7 +90,10 @@ const uploadFile = async () => {
   // Upload latest as latest.samples.json
   const samplesLength = samples.samples.length
   const latestLength = 100
-  const latestSamples = { ...samples, samples: samples.samples.slice(samplesLength - latestLength, samplesLength) }
+  const latestSamples = {
+    ...samples,
+    samples: samples.samples.slice(samplesLength - latestLength, samplesLength)
+  }
 
   const latestParams = {
     Bucket: bucket,
