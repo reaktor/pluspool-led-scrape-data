@@ -38,8 +38,9 @@ const uploadFile = async () => {
         centralParkData
       })
     })
-  console.log('samples done', samples)
   const dataSets = getDataSets()
+  console.log(dataSets)
+  debugger
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = JSON.stringify(samples, null, 2)

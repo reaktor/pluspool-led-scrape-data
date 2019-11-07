@@ -11,6 +11,7 @@ const pkg = require('./package.json')
 const rainToBacteria = require('@jedahan/predicted-mpn')
 const Database = require('better-sqlite3')
 const moment = require('moment')
+const R = require('ramda')
 const db = new Database('database.db', {
   // verbose: console.log
 })
@@ -56,15 +57,16 @@ const units = {
 }
 
 const setupDb = () => {
-  db.prepare(`CREATE TABLE IF NOT EXISTS noaaData(${Object.keys(maps.noaaData).join(' NUMERIC, ')})`).run()
-  db.prepare(`CREATE TABLE IF NOT EXISTS pier17Data(${Object.keys(maps.pier17Data).join(' NUMERIC, ')})`).run()
-  db.prepare(`CREATE TABLE IF NOT EXISTS centralParkData(${Object.keys(maps.centralParkData).join(' NUMERIC, ')})`).run()
+  db.prepare('CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)').run()
+  db.prepare('CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)').run()
+  db.prepare('CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)').run()
 }
 
 const storeData = (tableName, data) => {
-  const keys = Object.keys(maps[tableName])
-  const lastEntry = db.prepare(`SELECT * FROM "${tableName}" ORDER BY "${keys[0]}" DESC`).get()
-  const insert = db.prepare(`INSERT INTO "${tableName}"(${keys.join(', ')}) VALUES(@${keys.join(',@')})`)
+  const keys = Object.keys(maps[`${tableName}Data`])
+  const keysFiltered = Object.keys(maps[`${tableName}Data`]).filter(key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key))
+  const lastEntry = db.prepare(`SELECT * FROM "${tableName}" ORDER BY "timestamp" DESC`).get()
+  const insert = db.prepare(`INSERT INTO "${tableName}"(timestamp, ${keysFiltered.join(', ')}) VALUES(@${keys.join(',@')})`)
   const insertMany = db.transaction((entries) => {
     for (const entry of entries) insert.run(entry)
   })
@@ -91,12 +93,14 @@ const storeRawData = (sources) => {
   console.log('store data to DB')
 
   const noaaData = sources.noaaData.data
-    .map(sample => select(sample, maps.noaaData))
     .map(entry => {
-      entry.noaaTime = Date.parse(entry.noaaTime)
-      return entry
+      return {
+        noaaTime: Date.parse(entry.t),
+        speed: entry.s,
+        direction: entry.d
+      }
     })
-  storeData('noaaData', noaaData)
+  storeData('noaa', noaaData)
 
   const pier17Data = sources.pier17Data.samples
     .map(sample => {
@@ -108,7 +112,7 @@ const storeRawData = (sources) => {
     })
     .slice(0, -1)
 
-  storeData('pier17Data', pier17Data)
+  storeData('pier17', pier17Data)
 
   const centralParkData = sources.centralParkData.samples
     .map(sample => {
@@ -120,22 +124,62 @@ const storeRawData = (sources) => {
     })
     .slice(0, -1) // removal of invalid source entry
 
-  storeData('centralParkData', centralParkData)
+  storeData('centralPark', centralParkData)
 }
 
-const getDataSets = (versions = 'all') => {
-  return getYear()
+const getDataSets = () => {
+  return {
+    year: getSampleRange({
+      tables: ['noaa', 'pier17', 'centralPark'],
+      samplesPerDay: 2,
+      days: 365
+    }),
+    month: getSampleRange({
+      tables: ['noaa', 'pier17', 'centralPark'],
+      samplesPerDay: 4,
+      days: 30
+    }),
+    day: getSampleRange({
+      tables: ['noaa', 'pier17', 'centralPark'],
+      samplesPerDay: 1,
+      days: 1
+    })
+  }
+}
+const getSampleRange = ({
+  tables,
+  ...other
+}) => {
+  const samples = {}
+  tables.forEach(table => {
+    samples[`${table}Samples`] = getDownsampledData({
+      tableName: table,
+      ...other
+    })
+  })
+  return samples
 }
 
-const getYear = () => {
-  // 240 samples per day if stored data points are every 6 minutes
-  // so average every 120 entries to get 2 samples per day evenly spaced
-  // pier17Data is at an interval of 15 minutes
-  const nthEntry = 120
-
-  const results = db.prepare('SELECT * FROM  "noaaData" WHERE "noaaTime" > ? ORDER BY "noaaTime" DESC').all(`${moment().subtract(1, 'years').unix()}`)
-  const sampleCount = results.length / nthEntry
-  console.log(sampleCount)
+const getDownsampledData = ({
+  tableName,
+  samplesPerDay,
+  days
+}) => {
+  let downsampled = []
+  R.range(1, days).reverse().map(day => {
+    const results = db.prepare(`SELECT * FROM  "${tableName}" WHERE "timestamp" > ? ORDER BY "timestamp" DESC`).all(`${moment().subtract(day, 'days').unix()}`)
+    const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
+    const splittedResults = R.splitAt(samplesPerDayIndex, results)
+    const averagedResults = splittedResults.map(samples => {
+      const averagedResult = {}
+      Object.keys(samples[0]).forEach(key => {
+        averagedResult[key] = R.mean(samples.map(R.prop(key)))
+      })
+      return averagedResult
+    })
+    downsampled = downsampled.concat(averagedResults)
+  })
+  return downsampled
 }
 
 const getSamples = ({
