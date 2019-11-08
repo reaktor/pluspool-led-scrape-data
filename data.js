@@ -142,8 +142,9 @@ const getDataSets = () => {
     day: getSampleRange({
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 1,
-      days: 1
-    })
+      days: 2
+    }),
+    units: units
   }
 }
 const getSampleRange = ({
@@ -152,10 +153,20 @@ const getSampleRange = ({
 }) => {
   const samples = {}
   tables.forEach(table => {
-    samples[`${table}Samples`] = getDownsampledData({
+    const downsampledData = getDownsampledData({
       tableName: table,
       ...other
     })
+    samples[`${table}Samples`] = downsampledData
+    if (table === 'centralPark') {
+      const bacteria = rainToBacteria(downsampledData.map(({
+        rain
+      }) => rain))
+      samples[`${table}Samples`].map((sample, i) => {
+        sample.bacteria = bacteria[i]
+        return sample
+      })
+    }
   })
   return samples
 }
@@ -169,7 +180,7 @@ const getDownsampledData = ({
   R.range(1, days).reverse().map(day => {
     const results = db.prepare(`SELECT * FROM  "${tableName}" WHERE "timestamp" > ? ORDER BY "timestamp" DESC`).all(`${moment().subtract(day, 'days').unix()}`)
     const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
-    const splittedResults = R.splitAt(samplesPerDayIndex, results)
+    const splittedResults = R.splitEvery(samplesPerDayIndex, results)
     const averagedResults = splittedResults.map(samples => {
       const averagedResult = {}
       Object.keys(samples[0]).forEach(key => {
