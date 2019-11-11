@@ -68,7 +68,7 @@ const storeDataSetsToFile = (dataSets) => {
 }
 
 const uploadToS3 = (path, gzipJson) => {
-  console.log(path, gzipJson)
+  // console.log(path, gzipJson)
   s3.upload({
     ...params,
     Key: path,

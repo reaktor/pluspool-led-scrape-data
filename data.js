@@ -13,7 +13,7 @@ const Database = require('better-sqlite3')
 const moment = require('moment')
 const R = require('ramda')
 const db = new Database('database.db', {
-  // verbose: console.log
+  verbose: console.log
 })
 
 const maps = {
@@ -98,7 +98,7 @@ const storeRawData = (sources) => {
   const noaaData = sources.noaaData.data
     .map(entry => {
       return {
-        noaaTime: Date.parse(entry.t),
+        noaaTime: Date.parse(entry.t) / 1000,
         speed: entry.s,
         direction: entry.d
       }
@@ -109,7 +109,7 @@ const storeRawData = (sources) => {
     .map(sample => {
       var s = {}
       sources.pier17Data.header.map((header, i) => {
-        s[header] = sample[i]
+        s[header] = header === 'Date_Time' ? sample[i] / 1000 : sample[i]
       })
       return select(s, maps.pier17Data)
     })
@@ -121,7 +121,7 @@ const storeRawData = (sources) => {
     .map(sample => {
       var s = {}
       sources.centralParkData.header.map((header, i) => {
-        s[header] = sample[i]
+        s[header] = header === 'Date_Time' ? sample[i] / 1000 : sample[i]
       })
       return select(s, maps.centralParkData)
     })
@@ -186,14 +186,17 @@ const getDownsampledData = ({
 }) => {
   let downsampled = []
   R.range(1, days).reverse().map(day => {
-    const results = db.prepare(`SELECT * FROM  "${tableName}" WHERE "timestamp" > ? ORDER BY "timestamp" DESC`).all(`${moment().subtract(day, 'days').unix()}`)
+    const results = db.prepare(`SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`).all(`${moment().subtract(day, 'days').unix()}`, `${moment().subtract(day - 1, 'days').unix()}`)
+    if (results.length === 0) return // skip if ther is no data for that day
     const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
+    if (samplesPerDayIndex === 0) return // skip if there is not enough data samples for that day
     const splittedResults = R.splitEvery(samplesPerDayIndex, results)
     const averagedResults = splittedResults.map(samples => {
       const averagedResult = {}
       Object.keys(samples[0]).forEach(key => {
         averagedResult[key] = R.mean(samples.map(R.prop(key)))
       })
+      averagedResult.timestamp = samples[0].timestamp
       return averagedResult
     })
     downsampled = downsampled.concat(averagedResults)
