@@ -60,6 +60,9 @@ const setupDb = () => {
   db.prepare('CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)').run()
   db.prepare('CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)').run()
   db.prepare('CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)').run()
+  db.prepare('CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)').run()
+  db.prepare('CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)').run()
+  db.prepare('CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)').run()
 }
 
 const storeData = (tableName, data) => {
@@ -139,9 +142,14 @@ const getDataSets = () => {
       samplesPerDay: 4,
       days: 30
     }),
+    week: getSampleRange({
+      tables: ['noaa', 'pier17', 'centralPark'],
+      samplesPerDay: 8,
+      days: 7
+    }),
     day: getSampleRange({
       tables: ['noaa', 'pier17', 'centralPark'],
-      samplesPerDay: 1,
+      samplesPerDay: 96,
       days: 2
     }),
     units: units
