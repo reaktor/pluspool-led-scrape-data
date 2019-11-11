@@ -151,15 +151,16 @@ const getDataSets = () => {
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
       days: 2
-    }),
-    units: units
+    })
   }
 }
 const getSampleRange = ({
   tables,
   ...other
 }) => {
-  const samples = {}
+  const samples = {
+    units: units
+  }
   tables.forEach(table => {
     const downsampledData = getDownsampledData({
       tableName: table,

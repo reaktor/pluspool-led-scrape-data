@@ -155,4 +155,4 @@ const uploadFile = async () => {
   })
 }
 retrieveDataSets()
-// uploadFile()
+uploadFile()
