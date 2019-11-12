@@ -57,23 +57,47 @@ const units = {
 }
 
 const setupDb = () => {
-  db.prepare('CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)').run()
-  db.prepare('CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)').run()
-  db.prepare('CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)').run()
-  db.prepare('CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)').run()
-  db.prepare('CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)').run()
-  db.prepare('CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)').run()
+  db.prepare(
+    'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
+  ).run()
+  db.prepare(
+    'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
+  ).run()
+  db.prepare(
+    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)'
+  ).run()
+  db.prepare(
+    'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
+  ).run()
+  db.prepare(
+    'CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)'
+  ).run()
+  db.prepare(
+    'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'
+  ).run()
 }
 
 const storeData = (tableName, data) => {
   const keys = Object.keys(maps[`${tableName}Data`])
-  const keysFiltered = Object.keys(maps[`${tableName}Data`]).filter(key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key))
-  const lastEntry = db.prepare(`SELECT * FROM "${tableName}" ORDER BY "timestamp" DESC`).get()
-  const insert = db.prepare(`INSERT INTO "${tableName}"(timestamp, ${keysFiltered.join(', ')}) VALUES(@${keys.join(',@')})`)
-  const insertMany = db.transaction((entries) => {
+  const keysFiltered = Object.keys(maps[`${tableName}Data`]).filter(
+    key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key)
+  )
+  const lastEntry = db
+    .prepare(`SELECT * FROM "${tableName}" ORDER BY "timestamp" DESC`)
+    .get()
+  const insert = db.prepare(
+    `INSERT INTO "${tableName}"(timestamp, ${keysFiltered.join(
+      ', '
+    )}) VALUES(@${keys.join(',@')})`
+  )
+  const insertMany = db.transaction(entries => {
     for (const entry of entries) insert.run(entry)
   })
-  insertMany(data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry[keys[0]]))
+  insertMany(
+    data.filter(
+      row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry[keys[0]]
+    )
+  )
 }
 
 const getSource = (key, sourcemap) => {
@@ -87,22 +111,24 @@ const getSource = (key, sourcemap) => {
 }
 
 // Select and rename an object with a map from another object
-const select = (source, map) => Object.assign(...Object.entries(map).map(([to, name]) => ({
-  [to]: parseFloat(source[name])
-})))
+const select = (source, map) =>
+  Object.assign(
+    ...Object.entries(map).map(([to, name]) => ({
+      [to]: parseFloat(source[name])
+    }))
+  )
 
-const storeRawData = (sources) => {
+const storeRawData = sources => {
   setupDb()
   console.log('store data to DB')
 
-  const noaaData = sources.noaaData.data
-    .map(entry => {
-      return {
-        noaaTime: Date.parse(entry.t) / 1000,
-        speed: entry.s,
-        direction: entry.d
-      }
-    })
+  const noaaData = sources.noaaData.data.map(entry => {
+    return {
+      noaaTime: Date.parse(entry.t) / 1000,
+      speed: entry.s,
+      direction: entry.d
+    }
+  })
   storeData('noaa', noaaData)
 
   const pier17Data = sources.pier17Data.samples
@@ -131,88 +157,103 @@ const storeRawData = (sources) => {
 }
 
 const getDataSets = () => {
+  console.log(
+    getSampleRange({
+      tables: ['noaa', 'pier17', 'centralPark'],
+      samplesPerDay: 96,
+      days: 2
+    })
+  )
+
   return {
     year: getSampleRange({
+      name: 'year',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 2,
       days: 365
     }),
     month: getSampleRange({
+      name: 'month',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 4,
       days: 30
     }),
     week: getSampleRange({
+      name: 'week',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 8,
       days: 7
     }),
     day: getSampleRange({
+      name: 'day',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
       days: 2
     })
   }
 }
-const getSampleRange = ({
-  tables,
-  ...other
-}) => {
+const getSampleRange = ({ tables, name, ...other }) => {
   const samples = {
-    units: units
+    units,
+    name
   }
   tables.forEach(table => {
     const downsampledData = getDownsampledData({
       tableName: table,
       ...other
     })
-    samples[`${table}Samples`] = downsampledData
     if (table === 'centralPark') {
-      const bacteria = rainToBacteria(downsampledData.map(({
-        rain
-      }) => rain))
-      samples[`${table}Samples`].map((sample, i) => {
+      const bacteria = rainToBacteria(downsampledData.map(({ rain }) => rain))
+      downsampledData.map((sample, i) => {
         sample.bacteria = bacteria[i]
         return sample
       })
     }
+    samples[`${table}Samples`] = downsampledData
   })
   return samples
 }
 
-const getDownsampledData = ({
-  tableName,
-  samplesPerDay,
-  days
-}) => {
+// SELECT * FROM  "pier17" WHERE "timestamp" > '1573399869' AND "timestamp" < '1573486269' ORDER BY "timestamp" DESC
+const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
-  R.range(1, days).reverse().map(day => {
-    const results = db.prepare(`SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`).all(`${moment().subtract(day, 'days').unix()}`, `${moment().subtract(day - 1, 'days').unix()}`)
-    if (results.length === 0) return // skip if ther is no data for that day
-    const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
-    if (samplesPerDayIndex === 0) return // skip if there is not enough data samples for that day
-    const splittedResults = R.splitEvery(samplesPerDayIndex, results)
-    const averagedResults = splittedResults.map(samples => {
-      const averagedResult = {}
-      Object.keys(samples[0]).forEach(key => {
-        averagedResult[key] = R.mean(samples.map(R.prop(key)))
+  R.range(0, days)
+    .reverse()
+    .map(day => {
+      const results = db
+        .prepare(
+          `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
+        )
+        .all(
+          `${moment()
+            .subtract(day, 'days')
+            .unix()}`,
+          `${moment()
+            .subtract(day - 1, 'days')
+            .unix()}`
+        )
+      if (results.length === 0) return // skip if ther is no data for that day
+      const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
+      if (samplesPerDayIndex === 0) return // skip if there is not enough data samples for that day
+      const splittedResults = R.splitEvery(samplesPerDayIndex, results)
+      const averagedResults = splittedResults.map(samples => {
+        const averagedResult = {}
+        Object.keys(samples[0]).forEach(key => {
+          averagedResult[key] = R.mean(samples.map(R.prop(key)))
+        })
+        averagedResult.timestamp = samples[0].timestamp
+        return averagedResult
       })
-      averagedResult.timestamp = samples[0].timestamp
-      return averagedResult
+      downsampled = downsampled.concat(averagedResults)
     })
-    downsampled = downsampled.concat(averagedResults)
-  })
   return downsampled
 }
 
-const getSamples = ({
-  noaaData,
-  pier17Data,
-  centralParkData
-}) => {
+const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting fetched data to samples')
   const sourcemap = {
-    noaaData: 'https://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020&bin=0&unit=1&timeZone=UTC&view=data',
+    noaaData:
+      'https://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020&bin=0&unit=1&timeZone=UTC&view=data',
     pier17Data: pier17Data.source,
     centralParkData: centralParkData.source,
     columbia: 'https://www.ldeo.columbia.edu/user/mcgillis'
@@ -229,11 +270,16 @@ const getSamples = ({
     centralParkData.samples[centralParkData.samples.length - 2][0]
   )
 
-  const startIndex = noaaData.data.findIndex(sample => Date.parse(sample.t) >= start)
+  const startIndex = noaaData.data.findIndex(
+    sample => Date.parse(sample.t) >= start
+  )
   const reverseNoaaData = noaaData.data.slice().reverse()
-  const endIndex = reverseNoaaData.length - reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
+  const endIndex =
+    reverseNoaaData.length -
+    reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
 
-  const samples = noaaData.data.slice(startIndex, endIndex)
+  const samples = noaaData.data
+    .slice(startIndex, endIndex)
     .map(sample => {
       const noaaSample = sample
       return {
@@ -265,18 +311,19 @@ const getSamples = ({
       }
     })
 
-  const bacteria = rainToBacteria(samples.map(({
-    rain
-  }) => rain))
+  const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
   const samplesWithBacteria = samples.map((sample, index) => ({
     ...sample,
     bacteria: bacteria[index]
   }))
 
   const allKeys = [...new Set(...samplesWithBacteria.map(Object.keys))]
-  const sources = Object.assign({}, ...allKeys.map(key => ({
-    [key]: getSource(key, sourcemap)
-  })))
+  const sources = Object.assign(
+    {},
+    ...allKeys.map(key => ({
+      [key]: getSource(key, sourcemap)
+    }))
+  )
 
   console.log('Converting samples complete')
 
@@ -298,15 +345,11 @@ const getSamples = ({
  * @param {Date} timestamp - timestamp to get data
  * @returns {Object} A sample of data.
  */
-const deriveSample = ({
-  stationData,
-  timestamp
-}) => {
+const deriveSample = ({ stationData, timestamp }) => {
   if (!timestamp || !stationData || !stationData.samples) return {}
 
-  const index = stationData.samples.findIndex(
-    sample => sample[0] > timestamp
-  ) - 1
+  const index =
+    stationData.samples.findIndex(sample => sample[0] > timestamp) - 1
 
   const sample = stationData.samples[index]
 
