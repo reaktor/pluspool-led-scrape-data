@@ -188,7 +188,7 @@ const getDataSets = () => {
       name: 'day',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
-      days: 2
+      days: 1
     })
   }
 }
@@ -226,10 +226,10 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
         )
         .all(
           `${moment()
-            .subtract(day, 'days')
+            .subtract(day + 1, 'days')
             .unix()}`,
           `${moment()
-            .subtract(day - 1, 'days')
+            .subtract(day, 'days')
             .unix()}`
         )
       if (results.length === 0) return // skip if ther is no data for that day
