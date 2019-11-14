@@ -234,8 +234,10 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
         )
       if (results.length === 0) return // skip if ther is no data for that day
       const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
-      if (samplesPerDayIndex === 0) return // skip if there is not enough data samples for that day
-      const splittedResults = R.splitEvery(samplesPerDayIndex, results)
+      if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
+        downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
+      }
+      const splittedResults = samplesPerDayIndex > 0 ? R.splitEvery(samplesPerDayIndex, results) : [results];
       const averagedResults = splittedResults.map(samples => {
         const averagedResult = {}
         Object.keys(samples[0]).forEach(key => {
