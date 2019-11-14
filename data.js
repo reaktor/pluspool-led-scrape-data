@@ -94,10 +94,7 @@ const storeData = (tableName, data) => {
     for (const entry of entries) insert.run(entry)
   })
   insertMany(
-    data.filter(
-      row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry[keys[0]]
-    )
-  )
+    data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp))
 }
 
 const getSource = (key, sourcemap) => {
