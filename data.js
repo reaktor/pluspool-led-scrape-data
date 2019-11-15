@@ -94,7 +94,7 @@ const storeData = (tableName, data) => {
     for (const entry of entries) insert.run(entry)
   })
   insertMany(
-    data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp))
+    data.filter(row => lastEntry == null || row[keys[0]] > lastEntry.timestamp))
 }
 
 const getSource = (key, sourcemap) => {
@@ -154,14 +154,6 @@ const storeRawData = sources => {
 }
 
 const getDataSets = () => {
-  console.log(
-    getSampleRange({
-      tables: ['noaa', 'pier17', 'centralPark'],
-      samplesPerDay: 96,
-      days: 2
-    })
-  )
-
   return {
     year: getSampleRange({
       name: 'year',
@@ -184,7 +176,7 @@ const getDataSets = () => {
     day: getSampleRange({
       name: 'day',
       tables: ['noaa', 'pier17', 'centralPark'],
-      samplesPerDay: 96,
+      samplesPerDay: 999,
       days: 1
     })
   }
