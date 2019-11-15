@@ -170,7 +170,7 @@ const getDataSets = () => {
     week: getSampleRange({
       name: 'week',
       tables: ['noaa', 'pier17', 'centralPark'],
-      samplesPerDay: 8,
+      samplesPerDay: 16,
       days: 7
     }),
     day: getSampleRange({
