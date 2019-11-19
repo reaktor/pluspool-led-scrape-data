@@ -1,5 +1,6 @@
 .env
 *json.gz
 20[0-9][0-9]*json
-samples.json
+*samples.json
+database.db
 node_modules

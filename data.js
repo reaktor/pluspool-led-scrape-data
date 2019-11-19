@@ -8,7 +8,7 @@
  */
 
 const pkg = require('./package.json')
-const rainToBacteria = require('@jedahan/predicted-mpn')
+const rainToBacteria = require('@reaktor/predicted-mpn')
 const Database = require('better-sqlite3')
 const moment = require('moment')
 const R = require('ramda')
@@ -198,7 +198,14 @@ const getSampleRange = ({ tables, name, ...other }) => {
         return sample
       })
     }
-    samples[`${table}Samples`] = downsampledData
+    const roundedData = downsampledData.map(sample => {
+      const roundedResult = {}
+      Object.keys(sample).forEach(key => {
+        roundedResult[key] = sample[key].toString().indexOf('.') !== -1 ? parseFloat(sample[key].toFixed(3)) : sample[key];
+      })
+      return roundedResult;
+    })
+    samples[`${table}Samples`] = roundedData
   })
   return samples
 }
