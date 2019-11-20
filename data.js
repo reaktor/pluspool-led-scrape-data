@@ -201,7 +201,7 @@ const getSampleRange = ({ tables, name, ...other }) => {
     const roundedData = downsampledData.map(sample => {
       const roundedResult = {}
       Object.keys(sample).forEach(key => {
-        roundedResult[key] = sample[key].toString().indexOf('.') !== -1 ? parseFloat(sample[key].toFixed(3)) : sample[key];
+        roundedResult[key] = sample[key].toString().indexOf('.') !== -1 ? parseFloat(sample[key].toFixed(2)) : sample[key];
       })
       return roundedResult;
     })
