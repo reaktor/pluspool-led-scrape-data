@@ -33,7 +33,8 @@ const maps = {
   },
   centralParkData: {
     centralParkTime: 'Date_Time',
-    rain: 'Rain_10680977_in'
+    rain: 'Rain_10680977_in',
+    bacteria: 'bacteria'
   },
   columbia: {
     bacteria: 'bacteria'
@@ -64,7 +65,7 @@ const setupDb = () => {
     'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
   ).run()
   db.prepare(
-    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)'
+    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
   ).run()
   db.prepare(
     'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
@@ -150,6 +151,12 @@ const storeRawData = sources => {
     })
     .slice(0, -1) // removal of invalid source entry
 
+    const bacteria = rainToBacteria(centralParkData.map(({ rain }) => rain))
+    // TODO: the bacteria algo needs to be run BEFORE the averaging
+    centralParkData.map((sample, i) => {
+      sample.bacteria = bacteria[i]
+      return sample
+    })
   storeData('centralPark', centralParkData)
 }
 
@@ -191,17 +198,10 @@ const getSampleRange = ({ tables, name, ...other }) => {
       tableName: table,
       ...other
     })
-    if (table === 'centralPark') {
-      const bacteria = rainToBacteria(downsampledData.map(({ rain }) => rain))
-      downsampledData.map((sample, i) => {
-        sample.bacteria = bacteria[i]
-        return sample
-      })
-    }
     const roundedData = downsampledData.map(sample => {
       const roundedResult = {}
       Object.keys(sample).forEach(key => {
-        roundedResult[key] = sample[key].toString().indexOf('.') !== -1 ? parseFloat(sample[key].toFixed(2)) : sample[key];
+        roundedResult[key] = sample[key] && sample[key].toString().indexOf('.') !== -1 ? parseFloat(sample[key].toFixed(2)) : sample[key];
       })
       return roundedResult;
     })
