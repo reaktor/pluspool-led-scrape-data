@@ -14,6 +14,12 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2018
   },
-  rules: {
-  }
+  rules: 
+    {    
+      // react/jsx-filename-extension: [1, { "extensions": [".js", ".jsx"] }],
+      implicit-arrow-linebreak: "off",    
+      comma-dangle: "off",    
+      indent: "off",    
+      no-trailing-spaces: "off"  
+    }
 }
