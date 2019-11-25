@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@jedahan/predicted-mpn": "git+ssh://git@github.com/jedahan/predicted-mpn.git",
+    "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn#new-mpn-algo",
     "aws-sdk": "^2.524.0",
     "datagarrison": "^2.0.0",
     "dotenv": "^8.1.0",

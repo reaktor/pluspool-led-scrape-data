@@ -8,7 +8,7 @@
  */
 
 const pkg = require('./package.json')
-const rainToBacteria = require('@jedahan/predicted-mpn')
+const rainToBacteria = require('@reaktor/predicted-mpn')
 const Database = require('better-sqlite3')
 const moment = require('moment')
 const R = require('ramda')
