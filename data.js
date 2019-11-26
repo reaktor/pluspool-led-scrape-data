@@ -32,9 +32,9 @@ const maps = {
     temperature: 'water temperature_SDI_0_2_F'
   },
   centralParkData: {
-    bacteria: 'bacteria',
     centralParkTime: 'Date_Time',
-    rain: 'Rain_10680977_in'
+    rain: 'Rain_10680977_in',
+    bacteria: 'bacteria'
   },
   columbia: {
     bacteria: 'bacteria'
