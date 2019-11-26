@@ -32,6 +32,7 @@ const maps = {
     temperature: 'water temperature_SDI_0_2_F'
   },
   centralParkData: {
+    bacteria: 'bacteria',
     centralParkTime: 'Date_Time',
     rain: 'Rain_10680977_in'
   },
@@ -64,7 +65,7 @@ const setupDb = () => {
     'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
   ).run()
   db.prepare(
-    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC)'
+    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
   ).run()
   db.prepare(
     'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
@@ -150,6 +151,12 @@ const storeRawData = sources => {
     })
     .slice(0, -1) // removal of invalid source entry
 
+    const bacteria = rainToBacteria(centralParkData.map(({ rain }) => rain))
+    console.log(bacteria.length)
+    centralParkData.map((sample, i) => {
+      sample.bacteria = bacteria[i]
+      return sample
+    })
   storeData('centralPark', centralParkData)
 }
 
