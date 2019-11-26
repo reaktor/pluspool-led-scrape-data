@@ -206,13 +206,6 @@ const getSampleRange = ({ tables, name, ...other }) => {
       tableName: table,
       ...other
     })
-    if (table === 'centralPark') {
-      const bacteria = rainToBacteria(downsampledData.map(({ rain }) => rain))
-      downsampledData.map((sample, i) => {
-        sample.bacteria = bacteria[i]
-        return sample
-      })
-    }
     samples[`${table}Samples`] = downsampledData
   })
   return samples
