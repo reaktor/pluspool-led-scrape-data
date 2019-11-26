@@ -211,7 +211,6 @@ const getSampleRange = ({ tables, name, ...other }) => {
   return samples
 }
 
-// SELECT * FROM  "pier17" WHERE "timestamp" > '1573399869' AND "timestamp" < '1573486269' ORDER BY "timestamp" DESC
 const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
   R.range(0, days)
