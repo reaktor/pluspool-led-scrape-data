@@ -3,16 +3,83 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pako = require('pako')
-const { fetchNoaaData, fetchPier17Data, fetchCentralParkData } = require('./fetch')
-const { getSamples } = require('./data')
+const {
+  fetchNoaaData,
+  fetchPier17Data,
+  fetchCentralParkData
+} = require('./fetch')
+const {
+  getSamples,
+  storeRawData,
+  getDataSets
+} = require('./data')
 
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
 const bucket = process.env.AWS_BUCKET
 
-const AWS = require('aws-sdk')
-const s3 = new AWS.S3({ accessKeyId, secretAccessKey })
+const params = {
+  Bucket: bucket,
+  ACL: 'public-read',
+  ContentType: 'application/json',
+  ContentDisposition: 'attachment',
+  ContentEncoding: 'gzip'
+}
 
+const AWS = require('aws-sdk')
+const s3 = new AWS.S3({
+  accessKeyId,
+  secretAccessKey
+})
+const retrieveDataSets = async () => {
+  await Promise.all([
+    Promise.resolve(fetchNoaaData()),
+    Promise.resolve(fetchPier17Data()),
+    Promise.resolve(fetchCentralParkData())
+  ])
+    .then(([noaaData, pier17Data, centralParkData]) => {
+      storeRawData({
+        noaaData,
+        pier17Data,
+        centralParkData
+      })
+      storeDataSetsToFile(getDataSets())
+    })
+}
+
+const storeDataSetsToFile = (dataSets) => {
+  Object.keys(dataSets).forEach(rangeName => {
+    const path = `${rangeName}_samples.json`
+
+    const json = JSON.stringify(dataSets[rangeName], null, 2)
+    const gzipJson = pako.gzip(json)
+
+    // If we do not have aws credentials, write to local filesystem
+    if (!accessKeyId || !secretAccessKey) {
+      const fs = require('fs')
+      fs.writeFile(path, json, (err) => {
+        if (err) throw err
+        console.log(`Samples written to '${path}'`)
+      })
+    } else {
+      uploadToS3(path, gzipJson)
+    }
+  })
+}
+
+const uploadToS3 = (path, gzipJson) => {
+  // console.log(path, gzipJson)
+  s3.upload({
+    ...params,
+    Key: path,
+    Body: Buffer.from(gzipJson, 'utf-8')
+  }, (s3Err, data) => {
+    if (s3Err) throw s3Err
+    console.log(`Samples uploaded to ${data.Location}`)
+  })
+}
+
+// Legacy uploadFile
 const uploadFile = async () => {
   const samples = await Promise.all([
     Promise.resolve(fetchNoaaData()),
@@ -21,9 +88,12 @@ const uploadFile = async () => {
   ])
     .then(([noaaData, pier17Data, centralParkData]) => {
       console.log('Data fetching complete')
-      return getSamples({ noaaData, pier17Data, centralParkData })
+      return getSamples({
+        noaaData,
+        pier17Data,
+        centralParkData
+      })
     })
-
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = JSON.stringify(samples, null, 2)
@@ -43,21 +113,21 @@ const uploadFile = async () => {
     return
   }
 
-  const params = {
-    Bucket: bucket,
-    ACL: 'public-read',
-    ContentType: 'application/json',
-    ContentDisposition: 'attachment',
-    ContentEncoding: 'gzip'
-  }
-
   // First upload as (new Date()).json
-  s3.upload({ ...params, Key: path, Body: Buffer.from(gzipJson, 'utf-8') }, (s3Err, data) => {
+  s3.upload({
+    ...params,
+    Key: path,
+    Body: Buffer.from(gzipJson, 'utf-8')
+  }, (s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
     // Then copy to `samples.json`
-    s3.copyObject({ ...params, CopySource: data.Location, Key: archivePath }, (s3Err, data) => {
+    s3.copyObject({
+      ...params,
+      CopySource: data.Location,
+      Key: archivePath
+    }, (s3Err, data) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
     })
@@ -66,7 +136,10 @@ const uploadFile = async () => {
   // Upload latest as latest.samples.json
   const samplesLength = samples.samples.length
   const latestLength = 100
-  const latestSamples = { ...samples, samples: samples.samples.slice(samplesLength - latestLength, samplesLength) }
+  const latestSamples = {
+    ...samples,
+    samples: samples.samples.slice(samplesLength - latestLength, samplesLength)
+  }
 
   const latestParams = {
     Bucket: bucket,
@@ -81,5 +154,5 @@ const uploadFile = async () => {
     console.log(`Latest samples uploaded to ${data.Location}`)
   })
 }
-
+retrieveDataSets()
 uploadFile()

@@ -10,10 +10,16 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@jedahan/predicted-mpn": "git+ssh://git@github.com/jedahan/predicted-mpn.git",
+    "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn#new-mpn-algo",
     "aws-sdk": "^2.524.0",
     "datagarrison": "^2.0.0",
     "dotenv": "^8.1.0",
+    "eslint": "^6.6.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "isomorphic-unfetch": "^3.0.0",
     "jest": "^24.9.0",
     "pako": "^1.0.10",
@@ -23,5 +29,16 @@
     "env": [
       "jest"
     ]
+  },
+  "dependencies": {
+    "better-sqlite3": "^5.4.3",
+    "moment": "^2.24.0",
+    "ramda": "^0.26.1"
+  },
+  "prettier": {
+    "trailingComma": "none",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
   }
 }
