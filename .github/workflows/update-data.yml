@@ -9,9 +9,13 @@ jobs:
   scrape-data:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
+      - name: checkout code
         uses: actions/checkout@v3
-      - name: Scrape data
+      - name: setup node
+        uses: actions/setup-node@v3
+      - name: install dependencies
+         run: npm ci
+      - name: scrape data
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
