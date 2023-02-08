@@ -1,21 +1,24 @@
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
-
 const pako = require('pako')
+
 const {
   fetchNoaaData,
   fetchPier17Data,
   fetchCentralParkData
 } = require('./fetch')
+
 const {
   getSamples,
   storeRawData,
   getDataSets
 } = require('./data')
 
+if (!("AWS_ACCESS_KEY_ID" in process.env)) throw new Error('Missing AWS_ACCESS_KEY_ID')
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+
+if (!("AWS_SECRET_ACCESS_KEY" in process.env)) throw new Error('Missing AWS_SECRET_ACCESS_KEY')
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+
+if (!("AWS_BUCKET" in process.env)) throw new Error('Missing AWK_BUCKET')
 const bucket = process.env.AWS_BUCKET
 
 const params = {
@@ -127,7 +130,7 @@ const uploadFile = async () => {
       ...params,
       CopySource: data.Location,
       Key: archivePath
-    }, (s3Err, data) => {
+    }, (s3Err) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
     })
