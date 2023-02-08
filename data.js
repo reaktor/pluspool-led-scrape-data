@@ -99,7 +99,7 @@ const storeData = (tableName, data) => {
 }
 
 const getSource = (key, sourcemap) => {
-  if (key === 'bacteria') return 'https://www.ldeo.columbia.edu/user/mcgillis'
+  if (key === 'bacteria') return 'https://scholar.google.com/citations?hl=en&user=POJ0vZ8AAAAJ&view_op=list_works&sortby=pubdate'
 
   for (const [sourcename, map] of Object.entries(maps)) {
     if (Object.keys(map).includes(key)) return sourcemap[sourcename]
@@ -151,12 +151,12 @@ const storeRawData = sources => {
     })
     .slice(0, -1) // removal of invalid source entry
 
-    const bacteria = rainToBacteria(centralParkData.map(({ rain }) => rain))
-    console.log(bacteria.length)
-    centralParkData.map((sample, i) => {
-      sample.bacteria = bacteria[i]
-      return sample
-    })
+  const bacteria = rainToBacteria(centralParkData.map(({ rain }) => rain))
+  console.log(bacteria.length)
+  centralParkData.map((sample, i) => {
+    sample.bacteria = bacteria[i]
+    return sample
+  })
   storeData('centralPark', centralParkData)
 }
 
@@ -233,7 +233,7 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
       if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
         downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
       }
-      const splittedResults = samplesPerDayIndex > 0 ? R.splitEvery(samplesPerDayIndex, results) : [results];
+      const splittedResults = samplesPerDayIndex > 0 ? R.splitEvery(samplesPerDayIndex, results) : [results]
       const averagedResults = splittedResults.map(samples => {
         const averagedResult = {}
         Object.keys(samples[0]).forEach(key => {
