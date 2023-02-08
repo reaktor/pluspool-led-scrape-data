@@ -27,3 +27,7 @@ Ensure that the S3 bucket you are using has this CORS configuration in order for
 # Production
 
 We run this on github actions runner, every 6 minutes. See [.github/workflows/scrape-data.yml]()
+
+This action requires a read-only deploy key on @reaktor/predicted-mpn
+
+This key is saved in our 1password instance, and set as SSH_PRIVATE_KEY secret in github secrets
