@@ -2,13 +2,17 @@ This codebase is intended to scrape data from multiple sources and upload a file
 
 # Setup
 
-Copy `.env.example` and populate with AWS keys.
+Set the necessary environment variables however you prefer
 
-# CORS Configuration
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
+    AWS_BUCKET
+
+# Make sure CORS Configuration is correct for the S3 bucket
 
 Ensure that the S3 bucket you are using has this CORS configuration in order for our front-end app to hit it:
 
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 <CORSRule>
@@ -20,20 +24,6 @@ Ensure that the S3 bucket you are using has this CORS configuration in order for
 </CORSConfiguration>
 ```
 
-# Running once
+# Production
 
-```
-$ cd pluspool-led-scrape-data && source .env && node index.js
-```
-
-# Running every 6 minutes
-
-Create crontab file using command and file contents below
-
-```
-$ crontab -e
-```
-
-```
-*/6     *       *       *       *       cd pluspool-led-scrape-data && source .env && node index.js
-```
+We run this on github actions runner, every 6 minutes. See [.github/workflows/scrape-data.yml]()
