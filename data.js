@@ -100,7 +100,6 @@ const storeData = (tableName, data) => {
 
 const getSource = (key, sourcemap) => {
   if (key === 'bacteria') return 'https://scholar.google.com/citations?hl=en&user=POJ0vZ8AAAAJ&view_op=list_works&sortby=pubdate'
-  // 'https://www.ldeo.columbia.edu/user/mcgillis'
 
   for (const [sourcename, map] of Object.entries(maps)) {
     if (Object.keys(map).includes(key)) return sourcemap[sourcename]
