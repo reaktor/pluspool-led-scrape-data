@@ -29,11 +29,10 @@ const params = {
   ContentEncoding: 'gzip'
 }
 
-const AWS = require('aws-sdk')
-const s3 = new AWS.S3({
-  accessKeyId,
-  secretAccessKey
-})
+import { S3Client, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3"
+
+const s3Client = new S3Client({ region: 'us-east-2'})
+
 const retrieveDataSets = async () => {
   await Promise.all([
     Promise.resolve(fetchNoaaData()),
@@ -71,15 +70,18 @@ const storeDataSetsToFile = (dataSets) => {
 }
 
 const uploadToS3 = (path, gzipJson) => {
-  // console.log(path, gzipJson)
-  s3.upload({
+  const uploadParams = {
     ...params,
     Key: path,
     Body: Buffer.from(gzipJson, 'utf-8')
-  }, (s3Err, data) => {
-    if (s3Err) throw s3Err
-    console.log(`Samples uploaded to ${data.Location}`)
-  })
+  }
+
+  s3Client
+    .send(PutObjectCommand(uploadParams))
+    .then((s3Err, data) => {
+      if (s3Err) throw s3Err
+      console.log(`Samples uploaded to ${data.Location}`)
+    })
 }
 
 // Legacy uploadFile
@@ -118,20 +120,20 @@ const uploadFile = async () => {
   }
 
   // First upload as (new Date()).json
-  s3.upload({
+  s3Client.send(new PutObjectCommand({
     ...params,
     Key: path,
-    Body: Buffer.from(gzipJson, 'utf-8')
-  }, (s3Err, data) => {
+    Body: Buffer.from(gzipJson, 'utf-8'),
+  })).then((s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Samples uploaded to ${data.Location}`)
 
     // Then copy to `samples.json`
-    s3.copyObject({
+    s3Client.send(new CopyObjectCommand({
       ...params,
       CopySource: data.Location,
       Key: archivePath
-    }, (s3Err) => {
+    })).then((s3Err) => {
       if (s3Err) throw s3Err
       console.log(`copied to '${archivePath}'`)
     })
@@ -153,7 +155,7 @@ const uploadFile = async () => {
     Body: Buffer.from(JSON.stringify(latestSamples, null, 2), 'utf-8')
   }
 
-  s3.upload(latestParams, (s3Err, data) => {
+  s3Client.send(PutObjectCommand(latestParams)).then((s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Latest samples uploaded to ${data.Location}`)
   })

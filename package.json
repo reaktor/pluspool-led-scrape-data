@@ -11,7 +11,6 @@
   },
   "devDependencies": {
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
-    "aws-sdk": "^2.1311.0",
     "datagarrison": "^2.0.0",
     "isomorphic-unfetch": "^4.0.2",
     "jest": "^29.4.2",
@@ -24,6 +23,7 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.267.0",
     "better-sqlite3": "^8.1.0",
     "moment": "^2.29.4",
     "ramda": "^0.28.0"
