@@ -92,7 +92,6 @@ const uploadFile = async () => {
   ])
     .then(([noaaData, pier17Data, centralParkData]) => {
       const keys = [noaaData, pier17Data, centralParkData].map(data => Object.keys(data))
-      console.debug({ keys })
       return getSamples({
         noaaData,
         pier17Data,

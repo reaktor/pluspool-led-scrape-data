@@ -152,7 +152,6 @@ const storeRawData = sources => {
     .slice(0, -1) // removal of invalid source entry
 
   const bacteria = rainToBacteria(centralParkData.map(({ rain }) => rain))
-  console.log(bacteria.length)
   centralParkData.map((sample, i) => {
     sample.bacteria = bacteria[i]
     return sample
@@ -271,7 +270,6 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const startIndex = noaaData.data?.findIndex(
     sample => Date.parse(sample.t) >= start
   )
-  console.log({ noaaData })
   const reverseNoaaData = noaaData.data.slice().reverse()
   const endIndex =
     reverseNoaaData.length -
