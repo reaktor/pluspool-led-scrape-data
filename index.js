@@ -49,7 +49,7 @@ const retrieveDataSets = async () => {
 }
 
 const storeDataSetsToFile = (dataSets) => {
-  Object.keys(dataSets).forEach(rangeName => {
+  Object.keys(dataSets).forEach(async (rangeName) => {
     const path = `${rangeName}_samples.json`
 
     const json = JSON.stringify(dataSets[rangeName], null, 2)
@@ -63,24 +63,21 @@ const storeDataSetsToFile = (dataSets) => {
         console.log(`Samples written to '${path}'`)
       })
     } else {
-      uploadToS3(path, gzipJson)
+      console.log('uplodaing to S3')
+      await uploadToS3(path, gzipJson)
     }
   })
 }
 
-const uploadToS3 = (path, gzipJson) => {
+const uploadToS3 = async (path, gzipJson) => {
   const uploadParams = {
     ...params,
     Key: path,
     Body: Buffer.from(gzipJson, 'utf-8')
   }
 
-  s3Client
-    .send(new PutObjectCommand(uploadParams))
-    .then((s3Err, data) => {
-      if (s3Err) throw s3Err
-      console.log(`Samples uploaded to ${data.Location}`)
-    })
+  await s3Operation(new PutObjectCommand(uploadParams))
+  console.log(`Samples uploaded to ${uploadParams.Bucket}/${uploadParams.Key}`)
 }
 
 // Legacy uploadFile
@@ -118,24 +115,21 @@ const uploadFile = async () => {
   }
 
   // First upload as (new Date()).json
-  s3Client.send(new PutObjectCommand({
+  const uploadParams = {
     ...params,
     Key: path,
-    Body: Buffer.from(gzipJson, 'utf-8'),
-  })).then((s3Err, data) => {
-    if (s3Err) throw s3Err
-    console.log(`Samples uploaded to ${data.Location}`)
+    Body: Buffer.from(gzipJson, 'utf-8')
+  }
+  await s3Operation(new PutObjectCommand(uploadParams))
+  console.log(`Samples uploaded to ${uploadParams.Bucket}/${uploadParams.Key}`)
 
-    // Then copy to `samples.json`
-    s3Client.send(new CopyObjectCommand({
-      ...params,
-      CopySource: data.Location,
-      Key: archivePath
-    })).then((s3Err) => {
-      if (s3Err) throw s3Err
-      console.log(`copied to '${archivePath}'`)
-    })
-  })
+  const copyParams = {
+    ...params,
+    CopySource: `${uploadParams.Bucket}/${uploadParams.Key}`,
+    Key: archivePath
+  }
+  await s3Operation(new CopyObjectCommand(copyParams));
+  console.log(`Copied to ${copyParams.Bucket}/${copyParams.Key}`)
 
   // Upload latest as latest.samples.json
   const samplesLength = samples.samples.length
@@ -153,10 +147,27 @@ const uploadFile = async () => {
     Body: Buffer.from(JSON.stringify(latestSamples, null, 2), 'utf-8')
   }
 
-  s3Client.send(new PutObjectCommand(latestParams)).then((s3Err, data) => {
-    if (s3Err) throw s3Err
-    console.log(`Latest samples uploaded to ${data.Location}`)
-  })
+  await s3Operation(new PutObjectCommand(latestParams));
+  console.log(`Latest samples uploaded to ${latestParams.Bucket}/${latestParams.Key}`)
 }
-retrieveDataSets()
-uploadFile()
+
+async function s3Operation (params) {
+  try {
+    await s3Client.send(params);
+  } catch (s3Err) {
+    console.log('encountered an AWS SDK S3 error', s3Err)
+    //reject with an error, so we don't end up with unhandled promise rejections
+    return new Promise((res, reject) => {
+      reject(s3Err);
+    })
+  }
+}
+
+//catch a rejected promise, so we don't have unhandled promise rejection errors
+Promise.all([
+    retrieveDataSets(),
+    uploadFile()
+  ]
+).catch(err => {
+  console.log(err)
+})
