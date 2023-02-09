@@ -12,13 +12,13 @@ const {
   getDataSets
 } = require('./data')
 
-if (!("AWS_ACCESS_KEY_ID" in process.env)) throw new Error('Missing AWS_ACCESS_KEY_ID')
+if (!('AWS_ACCESS_KEY_ID' in process.env)) throw new Error('Missing AWS_ACCESS_KEY_ID')
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
 
-if (!("AWS_SECRET_ACCESS_KEY" in process.env)) throw new Error('Missing AWS_SECRET_ACCESS_KEY')
+if (!('AWS_SECRET_ACCESS_KEY' in process.env)) throw new Error('Missing AWS_SECRET_ACCESS_KEY')
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
 
-if (!("AWS_BUCKET" in process.env)) throw new Error('Missing AWK_BUCKET')
+if (!('AWS_BUCKET' in process.env)) throw new Error('Missing AWK_BUCKET')
 const bucket = process.env.AWS_BUCKET
 
 const params = {
@@ -90,7 +90,8 @@ const uploadFile = async () => {
     Promise.resolve(fetchCentralParkData())
   ])
     .then(([noaaData, pier17Data, centralParkData]) => {
-      console.log('Data fetching complete')
+      const keys = [noaaData, pier17Data, centralParkData].map(data => Object.keys(data))
+      console.debug({ keys })
       return getSamples({
         noaaData,
         pier17Data,

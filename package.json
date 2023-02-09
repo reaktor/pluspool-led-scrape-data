@@ -13,13 +13,6 @@
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
     "aws-sdk": "^2.1311.0",
     "datagarrison": "^2.0.0",
-    "dotenv": "^8.1.0",
-    "eslint": "^6.6.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
     "isomorphic-unfetch": "^3.0.0",
     "jest": "^24.9.0",
     "pako": "^1.0.10",
@@ -34,11 +27,5 @@
     "better-sqlite3": "^8.1.0",
     "moment": "^2.29.4",
     "ramda": "^0.28.0"
-  },
-  "prettier": {
-    "trailingComma": "none",
-    "tabWidth": 2,
-    "semi": false,
-    "singleQuote": true
   }
 }

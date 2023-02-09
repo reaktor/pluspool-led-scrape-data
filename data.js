@@ -131,8 +131,8 @@ const storeRawData = sources => {
 
   const pier17Data = sources.pier17Data.samples
     .map(sample => {
-      var s = {}
-      sources.pier17Data.header.map((header, i) => {
+      const s = {}
+      sources.pier17Data.header.forEach((header, i) => {
         s[header] = header === 'Date_Time' ? sample[i] / 1000 : sample[i]
       })
       return select(s, maps.pier17Data)
@@ -143,8 +143,8 @@ const storeRawData = sources => {
 
   const centralParkData = sources.centralParkData.samples
     .map(sample => {
-      var s = {}
-      sources.centralParkData.header.map((header, i) => {
+      const s = {}
+      sources.centralParkData.header.forEach((header, i) => {
         s[header] = header === 'Date_Time' ? sample[i] / 1000 : sample[i]
       })
       return select(s, maps.centralParkData)
@@ -215,7 +215,7 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
   R.range(0, days)
     .reverse()
-    .map(day => {
+    .forEach(day => {
       const results = db
         .prepare(
           `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
@@ -263,7 +263,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
     centralParkData.samples[0][0]
   )
   const end = Math.min(
-    Date.parse(noaaData.data?[noaaData.data.length - 1].t),
+    Date.parse(noaaData.data?.[noaaData.data.length - 1].t),
     pier17Data.samples[pier17Data.samples.length - 2][0],
     centralParkData.samples[centralParkData.samples.length - 2][0]
   )
@@ -271,7 +271,8 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   const startIndex = noaaData.data?.findIndex(
     sample => Date.parse(sample.t) >= start
   )
-  const reverseNoaaData = noaaData.data?.slice().reverse()
+  console.log({ noaaData })
+  const reverseNoaaData = noaaData.data.slice().reverse()
   const endIndex =
     reverseNoaaData.length -
     reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
@@ -328,8 +329,8 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   return {
     version: pkg.version,
     date: new Date(),
-    sources: sources,
-    units: units,
+    sources,
+    units,
     samples: samplesWithBacteria
   }
 }
