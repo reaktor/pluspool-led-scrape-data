@@ -147,7 +147,6 @@ const uploadFile = async () => {
     Body: Buffer.from(JSON.stringify(latestSamples, null, 2), 'utf-8')
   }
 
-
   await s3Operation(new PutObjectCommand(latestParams));
   console.log(`Latest samples uploaded to ${latestParams.Bucket}/${latestParams.Key}`)
 }
