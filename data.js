@@ -120,7 +120,7 @@ const storeRawData = sources => {
   setupDb()
   console.log('store data to DB')
 
-  const noaaData = sources.noaaData.data.map(entry => {
+  const noaaData = sources.noaaData.data?.map(entry => {
     return {
       noaaTime: Date.parse(entry.t) / 1000,
       speed: entry.s,
@@ -258,20 +258,20 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   }
 
   const start = Math.max(
-    Date.parse(noaaData.data[0].t),
+    Date.parse(noaaData.data?.[0].t),
     pier17Data.samples[0][0],
     centralParkData.samples[0][0]
   )
   const end = Math.min(
-    Date.parse(noaaData.data[noaaData.data.length - 1].t),
+    Date.parse(noaaData.data?[noaaData.data.length - 1].t),
     pier17Data.samples[pier17Data.samples.length - 2][0],
     centralParkData.samples[centralParkData.samples.length - 2][0]
   )
 
-  const startIndex = noaaData.data.findIndex(
+  const startIndex = noaaData.data?.findIndex(
     sample => Date.parse(sample.t) >= start
   )
-  const reverseNoaaData = noaaData.data.slice().reverse()
+  const reverseNoaaData = noaaData.data?.slice().reverse()
   const endIndex =
     reverseNoaaData.length -
     reverseNoaaData.findIndex(sample => Date.parse(sample.t) <= end)
