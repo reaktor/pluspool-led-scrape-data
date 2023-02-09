@@ -1,4 +1,5 @@
 const pako = require('pako')
+const { S3Client, PutObjectCommand, CopyObjectCommand } = require("@aws-sdk/client-s3")
 
 const {
   fetchNoaaData,
@@ -28,8 +29,6 @@ const params = {
   ContentDisposition: 'attachment',
   ContentEncoding: 'gzip'
 }
-
-import { S3Client, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3"
 
 const s3Client = new S3Client({ region: 'us-east-2'})
 
@@ -77,7 +76,7 @@ const uploadToS3 = (path, gzipJson) => {
   }
 
   s3Client
-    .send(PutObjectCommand(uploadParams))
+    .send(new PutObjectCommand(uploadParams))
     .then((s3Err, data) => {
       if (s3Err) throw s3Err
       console.log(`Samples uploaded to ${data.Location}`)
@@ -155,7 +154,7 @@ const uploadFile = async () => {
     Body: Buffer.from(JSON.stringify(latestSamples, null, 2), 'utf-8')
   }
 
-  s3Client.send(PutObjectCommand(latestParams)).then((s3Err, data) => {
+  s3Client.send(new PutObjectCommand(latestParams)).then((s3Err, data) => {
     if (s3Err) throw s3Err
     console.log(`Latest samples uploaded to ${data.Location}`)
   })
