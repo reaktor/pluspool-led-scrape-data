@@ -1,9 +1,9 @@
 const ENDPOINTS = {
   noaaCurrent: {
-    url: 'https://tidesandcurrents.noaa.gov/api/datagetter',
+    url: 'https://tidesandcurrents.noaa.gov/api/prod/datagetter',
     query: {
       range: '2400',
-      station: 'n03020',
+      station: 'n06010',
       product: 'currents',
       units: 'english',
       time_zone: 'gmt',
