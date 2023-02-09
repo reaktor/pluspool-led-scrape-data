@@ -12,9 +12,7 @@ const rainToBacteria = require('@reaktor/predicted-mpn')
 const Database = require('better-sqlite3')
 const moment = require('moment')
 const R = require('ramda')
-const db = new Database('database.db', {
-  verbose: console.log
-})
+const db = new Database('database.db')
 
 const maps = {
   noaaData: {
@@ -160,14 +158,6 @@ const storeRawData = sources => {
 }
 
 const getDataSets = () => {
-  console.log(
-    getSampleRange({
-      tables: ['noaa', 'pier17', 'centralPark'],
-      samplesPerDay: 96,
-      days: 2
-    })
-  )
-
   return {
     year: getSampleRange({
       name: 'year',
