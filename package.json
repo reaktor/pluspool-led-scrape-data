@@ -13,9 +13,9 @@
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
     "aws-sdk": "^2.1311.0",
     "datagarrison": "^2.0.0",
-    "isomorphic-unfetch": "^3.0.0",
-    "jest": "^24.9.0",
-    "pako": "^1.0.10",
+    "isomorphic-unfetch": "^4.0.2",
+    "jest": "^29.4.2",
+    "pako": "^2.1.0",
     "standard": "^17.0.0"
   },
   "standard": {
