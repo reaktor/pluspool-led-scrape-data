@@ -8,19 +8,20 @@ const fetchNoaaData = () => {
   const { url, query } = ENDPOINTS.noaaCurrent
   const source = `${url}?${encode(query)}`
 
-  return fetch(source, {
-    method: 'GET'
-  }).then(response => {
-    if (response.ok) {
-      return response.json()
-    }
-    throw new Error(`Request rejected with status ${response.status}`)
-  })
+  return fetch(source, {method: 'GET'})
+    .then(response => {
+      if (response.ok) return response.json()
+      throw new Error(`Request rejected with status ${response.status}`)
+    })
+    .then(json => {
+      if (json.error && json.error.message) throw new Error(json.error)
+      return json
+    })
     .then(json => ({
       ...json,
       source,
       data: json.data?.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
-    }))
+    })
 }
 
 const fetchPier17Data = () => {
