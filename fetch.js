@@ -19,7 +19,7 @@ const fetchNoaaData = () => {
     .then(json => ({
       ...json,
       source,
-      data: json.data.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
+      data: json.data?.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
     }))
 }
 

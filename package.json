@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
-    "aws-sdk": "^2.524.0",
+    "aws-sdk": "^2.1311.0",
     "datagarrison": "^2.0.0",
     "dotenv": "^8.1.0",
     "eslint": "^6.6.0",
@@ -23,7 +23,7 @@
     "isomorphic-unfetch": "^3.0.0",
     "jest": "^24.9.0",
     "pako": "^1.0.10",
-    "standard": "^14.1.0"
+    "standard": "^17.0.0"
   },
   "standard": {
     "env": [
@@ -33,7 +33,7 @@
   "dependencies": {
     "better-sqlite3": "^8.1.0",
     "moment": "^2.29.4",
-    "ramda": "^0.26.1"
+    "ramda": "^0.28.0"
   },
   "prettier": {
     "trailingComma": "none",
