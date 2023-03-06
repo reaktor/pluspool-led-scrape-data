@@ -4,38 +4,38 @@ const { get } = require('datagarrison')
 const { encode } = require('querystring')
 
 const fetchNoaaData = () => {
-  console.log('Fetching NOAA data')
-  const { url, query } = ENDPOINTS.noaaCurrent
-  const source = `${url}?${encode(query)}`
+  console.log('Fetching NOAA data');
+  const { url, query } = ENDPOINTS.noaaCurrent;
+  const source = `${url}?${encode(query)}`;
 
   return fetch(source, { method: 'GET' })
-    .then(response => {
-      if (response.ok) return response.json()
-      throw new Error(`Request rejected with status ${response.status}`)
+    .then((response) => {
+      if (response.ok) return response.json();
+      throw new Error(`Request rejected with status ${response.status}`);
     })
-    .then(json => {
-      if (json.error && json.error.message) throw new Error(json.error.message)
-      return json
+    .then((json) => {
+      if (json.error && json.error.message) throw new Error(json.error.message);
+      return json;
     })
-    .then(json => ({
+    .then((json) => ({
       ...json,
       source,
-      data: json.data?.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
-    }))
-}
+      data: json.data?.map((datum) => ({ ...datum, t: `${datum.t} GMT` })),
+    }));
+};
 
 const fetchPier17Data = () => {
-  console.log('Fetching Pier 17 data')
-  return get(STREAMS.pier17)
-}
+  console.log('Fetching Pier 17 data');
+  return get(STREAMS.pier17);
+};
 
 const fetchCentralParkData = () => {
-  console.log('Fetching Central Park data')
-  return get(STREAMS.centralPark)
-}
+  console.log('Fetching Central Park data');
+  return get(STREAMS.centralPark);
+};
 
 module.exports = {
   fetchNoaaData,
   fetchPier17Data,
-  fetchCentralParkData
-}
+  fetchCentralParkData,
+};

@@ -236,6 +236,7 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
   return downsampled
 }
 
+
 const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting fetched data to samples')
   const sourcemap = {
