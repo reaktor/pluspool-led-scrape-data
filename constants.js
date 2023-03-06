@@ -1,4 +1,5 @@
 const ENDPOINTS = {
+  googleSheetId: '1DX2KE8NHpdEEO7ZwBEAjCc7BK1M43VoA',
   noaaCurrent: {
     url: 'https://tidesandcurrents.noaa.gov/api/prod/datagetter',
     query: {
@@ -7,10 +8,10 @@ const ENDPOINTS = {
       product: 'currents',
       units: 'english',
       time_zone: 'gmt',
-      format: 'json'
-    }
-  }
-}
+      format: 'json',
+    },
+  },
+};
 
 const STREAMS = {
   pier17: {
