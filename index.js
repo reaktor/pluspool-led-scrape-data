@@ -21,6 +21,10 @@ const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 if (!('AWS_BUCKET' in process.env)) throw new Error('Missing AWK_BUCKET');
 const bucket = process.env.AWS_BUCKET;
 
+// const accessKeyId = null;
+// const secretAccessKey = null;
+// const bucket = null;
+
 const params = {
   Bucket: bucket,
   ACL: 'public-read',
@@ -49,6 +53,7 @@ const retrieveDataSets = async () => {
 };
 
 const storeDataSetsToFile = (dataSets) => {
+
   Object.keys(dataSets).forEach(async (rangeName) => {
     const path = `${rangeName}_samples.json`;
 

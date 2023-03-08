@@ -59,22 +59,6 @@ const fetchManualData = async () => {
   let entries = items
     .filter((item) => item.timestamp)
     .map((item) => {
-     
-      // return {
-      //   timestamp: parseInt(item.timestamp),
-      //   enterococcus: item[headings.enterococcus],
-      //   enteroGM: item[headings.enteroGM],
-      //   fecalColiform: item[headings.fecalColiform],
-      //   fcGM: item[headings.fcGM],
-      //   fecalColiformGM: item[headings.fecalColiformGM],
-      //   turbidity: item[headings.turbidity],
-      //   rainfall: item[headings.rainfall],
-      //   rainfallPlus1Day: item[headings.rainfallPlus1Day],
-      //   rainfallPlus2Day: item[headings.rainfallPlus2Day],
-      // };
-
-    
-
       return [
         parseInt(item.timestamp),
          item[headings.enterococcus],
@@ -87,9 +71,7 @@ const fetchManualData = async () => {
         item[headings.rainfallPlus1Day],
         item[headings.rainfallPlus2Day],
       ]
-
     });
-
 
   return {
     source: "https://docs.google.com/spreadsheets/d/" + ENDPOINTS.googleSheetId,
