@@ -34,9 +34,18 @@ const maps = {
     rain: 'Rain_10680977_in',
     bacteria: 'bacteria'
   },
+  manualData: {
+    manualTime: 'Date_Time',
+    enterococcus: 'enterococcus',
+    enteroGM: 'enteroGM',
+    fecalColiform: 'fecalColiform',
+    fcGM: 'fcGM',
+    fecalColiformGM: 'fecalColiformGM',
+    turbidity: 'turbidity'
+  },
   columbia: {
     bacteria: 'bacteria'
-  }
+  },
 }
 
 const units = {
@@ -52,7 +61,14 @@ const units = {
   temperature: 'F',
   centralParkTime: 'unix',
   rain: 'in',
-  bacteria: 'MPN'
+  bacteria: 'MPN',
+  enterococcus: 'MPN/100mL',
+  enteroGM: 'MPN/100mL GM',
+  fecalColiform: 'CFU/100mL',
+  fecalColiformGM: 'CFU/100mL GM',
+  rainfall: 'in',
+  rainfallPlus1Day: 'in',
+  rainfallPlus2Day: 'in'
 }
 
 const setupDb = () => {
@@ -66,6 +82,10 @@ const setupDb = () => {
     'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
   ).run()
   db.prepare(
+    `CREATE TABLE IF NOT EXISTS manual(timestamp NUMERIC, enterococcus NUMERIC, enteroGM NUMERIC, fecalColiform NUMERIC, 
+    fcGM NUMERIC, fecalColiformGM NUMERIC, turbidity NUMERIC, rainfall NUMERIC, rainfallPlus1Day NUMERIC, rainfallPlus2Day NUMERIC)`
+  ).run()
+  db.prepare(
     'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
   ).run()
   db.prepare(
@@ -74,12 +94,16 @@ const setupDb = () => {
   db.prepare(
     'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'
   ).run()
+  db.prepare(
+    'CREATE INDEX IF NOT EXISTS "manual_timestamp" ON manual(timestamp)'
+  ).run()
 }
 
 const storeData = (tableName, data) => {
   const keys = Object.keys(maps[`${tableName}Data`])
+
   const keysFiltered = Object.keys(maps[`${tableName}Data`]).filter(
-    key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key)
+    key => !['noaaTime', 'pier17Time', 'centralParkTime', 'manualTime'].includes(key)
   )
   const lastEntry = db
     .prepare(`SELECT * FROM "${tableName}" ORDER BY "timestamp" DESC`)
@@ -115,6 +139,7 @@ const select = (source, map) =>
   )
 
 const storeRawData = sources => {
+
   setupDb()
   console.log('store data to DB')
 
@@ -125,6 +150,9 @@ const storeRawData = sources => {
       direction: entry.d
     }
   })
+
+  // { noaaTime: 1669687740, speed: '0.851', direction: '253' }
+
   storeData('noaa', noaaData)
 
   const pier17Data = sources.pier17Data.samples
@@ -136,6 +164,16 @@ const storeRawData = sources => {
       return select(s, maps.pier17Data)
     })
     .slice(0, -1)
+
+    // {
+    //   pier17Time: 1629402300,
+    //   oxygen: NaN,
+    //   salinity: NaN,
+    //   turbidity: NaN,
+    //   ph: NaN,
+    //   depth: NaN,
+    //   temperature: NaN
+    // }
 
   storeData('pier17', pier17Data)
 
@@ -154,32 +192,70 @@ const storeRawData = sources => {
     sample.bacteria = bacteria[i]
     return sample
   })
-  storeData('centralPark', centralParkData)
+
+  // { centralParkTime: 1599243300, rain: 0, bacteria: 75.246 }
+
+  const manualData = sources.manualData.samples?.map(entry => {
+
+ 
+    return {
+      manualTime: entry[0] / 1000,
+      enterococcus: entry[1],
+      enteroGM: entry[2],
+      fecalColiform: entry[3],
+      fcGM: entry[4],
+      fecalColiformGM: entry[5],
+      turbidity: entry[6],
+      rainfall: entry[7],
+      rainfallPlus1Day: entry[8],
+      rainfallPlus2Day: entry[9]
+    }
+
+    // return [
+    //   entry.timestamp / 1000, entry.enterococcus, entry.enteroGM, entry.fecalColiform, entry.fcGM, entry.fecalColiformGM,entry.turbidity, entry.rainfall, entry.rainfallPlus1Day, entry.rainfallPlus2Day
+    // ]
+  })
+
+  // {
+  //   manualTime: 1663832700,
+  //   enterococcus: 52,
+  //   enteroGM: 30.011104943600724,
+  //   fecalColiform: 70,
+  //   fcGM: 40.68662471226802,
+  //   fecalColiformGM: 'N/A',
+  //   turbidity: 3,
+  //   rainfall: '0.00',
+  //   rainfallPlus1Day: '0.00',
+  //   rainfallPlus2Day: '0.07'
+  // }
+
+ 
+  storeData('manual', manualData)
 }
 
 const getDataSets = () => {
   return {
     year: getSampleRange({
       name: 'year',
-      tables: ['noaa', 'pier17', 'centralPark'],
+      tables: ['noaa', 'pier17', 'centralPark', 'manual'],
       samplesPerDay: 2,
       days: 365
     }),
     month: getSampleRange({
       name: 'month',
-      tables: ['noaa', 'pier17', 'centralPark'],
+      tables: ['noaa', 'pier17', 'centralPark', 'manual'],
       samplesPerDay: 4,
       days: 30
     }),
     week: getSampleRange({
       name: 'week',
-      tables: ['noaa', 'pier17', 'centralPark'],
+      tables: ['noaa', 'pier17', 'centralPark', 'manual'],
       samplesPerDay: 8,
       days: 7
     }),
     day: getSampleRange({
       name: 'day',
-      tables: ['noaa', 'pier17', 'centralPark'],
+      tables: ['noaa', 'pier17', 'centralPark', 'manual'],
       samplesPerDay: 96,
       days: 1
     })
@@ -237,26 +313,33 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
 }
 
 
-const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
+const getSamples = ({ noaaData, pier17Data, centralParkData, manualData }) => {
   console.log('Converting fetched data to samples')
   const sourcemap = {
     noaaData:
       'https://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020&bin=0&unit=1&timeZone=UTC&view=data',
     pier17Data: pier17Data.source,
     centralParkData: centralParkData.source,
+    manualData: manualData.source,
     columbia: 'https://www.ldeo.columbia.edu/user/mcgillis'
   }
+
 
   const start = Math.max(
     Date.parse(noaaData.data?.[0].t),
     pier17Data.samples[0][0],
-    centralParkData.samples[0][0]
+    centralParkData.samples[0][0],
+    manualData.samples[0][0],
   )
+
+
   const end = Math.min(
     Date.parse(noaaData.data?.[noaaData.data.length - 1].t),
     pier17Data.samples[pier17Data.samples.length - 2][0],
-    centralParkData.samples[centralParkData.samples.length - 2][0]
+    centralParkData.samples[centralParkData.samples.length - 2][0],
+    manualData.samples[manualData.samples.length - 2][0] 
   )
+
 
   const startIndex = noaaData.data?.findIndex(
     sample => Date.parse(sample.t) >= start
@@ -298,6 +381,18 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
         centralParkTime: parseInt(centralParkSample.Date_Time)
       }
     })
+    .map(sample => {
+      const manualSample = deriveSample({
+        stationData: manualData,
+        timestamp: sample.noaaTime
+      })
+      return {
+        ...sample,
+        ...select(manualSample, maps.manualData),
+        manualTime: parseInt(manualSample.Date_Time)
+      }
+    })
+
 
   const bacteria = rainToBacteria(samples.map(({ rain }) => rain))
   const samplesWithBacteria = samples.map((sample, index) => ({
@@ -312,6 +407,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       [key]: getSource(key, sourcemap)
     }))
   )
+
 
   console.log('Converting samples complete')
 

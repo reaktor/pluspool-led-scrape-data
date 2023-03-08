@@ -5,6 +5,7 @@ const {
   fetchNoaaData,
   fetchPier17Data,
   fetchCentralParkData,
+  fetchManualData
 } = require('./fetch');
 
 const { getSamples, storeRawData, getDataSets } = require('./data');
@@ -35,11 +36,13 @@ const retrieveDataSets = async () => {
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData()),
-  ]).then(([noaaData, pier17Data, centralParkData]) => {
+    Promise.resolve(fetchManualData()),
+  ]).then(([noaaData, pier17Data, centralParkData, manualData]) => {
     storeRawData({
       noaaData,
       pier17Data,
       centralParkData,
+      manualData
     });
     storeDataSetsToFile(getDataSets());
   });
@@ -60,8 +63,8 @@ const storeDataSetsToFile = (dataSets) => {
         console.log(`Samples written to '${path}'`);
       });
     } else {
-      console.log('uplodaing to S3');
-      await uploadToS3(path, gzipJson);
+      console.log('uploading to S3');
+     await uploadToS3(path, gzipJson);
     }
   });
 };
@@ -83,16 +86,20 @@ const uploadFile = async () => {
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData()),
-  ]).then(([noaaData, pier17Data, centralParkData]) => {
-    const keys = [noaaData, pier17Data, centralParkData].map((data) =>
+    Promise.resolve(fetchManualData()),
+  ]).then(([noaaData, pier17Data, centralParkData, manualData]) => {
+    const keys = [noaaData, pier17Data, centralParkData, manualData].map((data) =>
       Object.keys(data)
     );
     return getSamples({
       noaaData,
       pier17Data,
       centralParkData,
+      manualData
     });
   });
+
+
   const path = 'samples.json';
   const archivePath = path.replace('samples', samples.date.toJSON());
   const json = JSON.stringify(samples, null, 2);
