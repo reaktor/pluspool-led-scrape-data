@@ -151,8 +151,6 @@ const storeRawData = sources => {
     }
   })
 
-  // { noaaTime: 1669687740, speed: '0.851', direction: '253' }
-
   storeData('noaa', noaaData)
 
   const pier17Data = sources.pier17Data.samples
@@ -164,16 +162,6 @@ const storeRawData = sources => {
       return select(s, maps.pier17Data)
     })
     .slice(0, -1)
-
-    // {
-    //   pier17Time: 1629402300,
-    //   oxygen: NaN,
-    //   salinity: NaN,
-    //   turbidity: NaN,
-    //   ph: NaN,
-    //   depth: NaN,
-    //   temperature: NaN
-    // }
 
   storeData('pier17', pier17Data)
 
@@ -193,11 +181,8 @@ const storeRawData = sources => {
     return sample
   })
 
-  // { centralParkTime: 1599243300, rain: 0, bacteria: 75.246 }
-
   const manualData = sources.manualData.samples?.map(entry => {
 
- 
     return {
       manualTime: entry[0] / 1000,
       enterococcus: entry[1],
@@ -210,26 +195,8 @@ const storeRawData = sources => {
       rainfallPlus1Day: entry[8],
       rainfallPlus2Day: entry[9]
     }
-
-    // return [
-    //   entry.timestamp / 1000, entry.enterococcus, entry.enteroGM, entry.fecalColiform, entry.fcGM, entry.fecalColiformGM,entry.turbidity, entry.rainfall, entry.rainfallPlus1Day, entry.rainfallPlus2Day
-    // ]
   })
 
-  // {
-  //   manualTime: 1663832700,
-  //   enterococcus: 52,
-  //   enteroGM: 30.011104943600724,
-  //   fecalColiform: 70,
-  //   fcGM: 40.68662471226802,
-  //   fecalColiformGM: 'N/A',
-  //   turbidity: 3,
-  //   rainfall: '0.00',
-  //   rainfallPlus1Day: '0.00',
-  //   rainfallPlus2Day: '0.07'
-  // }
-
- 
   storeData('manual', manualData)
 }
 
