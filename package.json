@@ -1,13 +1,15 @@
 {
   "name": "pluspool-led-scrape-data",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A node app that pulls in noaa api and a datagarrison stream to create a unified data file and uploads to S3.",
   "private": true,
   "main": "index.js",
   "scripts": {
-    "lint": "standard",
-    "lint:fix": "standard --fix",
-    "test": "jest"
+    "test": "jest",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "standard --fix"
   },
   "devDependencies": {
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
@@ -24,8 +26,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.267.0",
+    "@types/node": "18.15.3",
     "better-sqlite3": "^8.1.0",
     "moment": "^2.29.4",
-    "ramda": "^0.28.0"
+    "next": "^13.2.4",
+    "ramda": "^0.28.0",
+    "typescript": "4.9.5"
   }
 }
