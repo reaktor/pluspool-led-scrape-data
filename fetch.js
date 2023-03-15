@@ -1,5 +1,4 @@
 const { ENDPOINTS, STREAMS } = require('./constants')
-const fetch = require('isomorphic-unfetch')
 const { get } = require('datagarrison')
 const { encode } = require('querystring')
 

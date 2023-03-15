@@ -13,8 +13,8 @@
   },
   "devDependencies": {
     "@reaktor/predicted-mpn": "github:reaktor/predicted-mpn",
-    "datagarrison": "^2.0.0",
-    "isomorphic-unfetch": "^4.0.2",
+    "@types/react": "18.0.28",
+    "datagarrison": "github:reaktor/datagarrison#parser",
     "jest": "^29.4.2",
     "pako": "^2.1.0",
     "standard": "^17.0.0"
