@@ -33,19 +33,19 @@ const params = {
 const s3Client = new S3Client({ region: 'us-east-2'})
 
 const retrieveDataSets = async () => {
-  await Promise.all([
+  const [noaaData, pier17Data, centralParkData] = await Promise.all([
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData())
   ])
-    .then(([noaaData, pier17Data, centralParkData]) => {
-      storeRawData({
-        noaaData,
-        pier17Data,
-        centralParkData
-      })
-      storeDataSetsToFile(getDataSets())
-    })
+   
+  await storeRawData({
+    noaaData,
+    pier17Data,
+    centralParkData
+  })
+
+  storeDataSetsToFile(getDataSets())
 }
 
 const storeDataSetsToFile = (dataSets) => {
@@ -63,8 +63,8 @@ const storeDataSetsToFile = (dataSets) => {
         console.log(`Samples written to '${path}'`)
       })
     } else {
-      console.log('uplodaing to S3')
-      await uploadToS3(path, gzipJson)
+      console.log('uploading to S3')
+      //await uploadToS3(path, gzipJson)
     }
   })
 }
