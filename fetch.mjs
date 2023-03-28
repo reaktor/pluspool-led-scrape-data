@@ -1,5 +1,4 @@
 import { ENDPOINTS, STREAMS } from './constants.mjs'
-import fetch from 'isomorphic-unfetch'
 import { get } from 'datagarrison'
 import { encode } from 'querystring'
 
