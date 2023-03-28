@@ -1,17 +1,9 @@
-const pako = require('pako')
-const { S3Client, PutObjectCommand, CopyObjectCommand } = require("@aws-sdk/client-s3")
+import { gzip } from 'pako'
+import { S3Client, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3"
 
-const {
-  fetchNoaaData,
-  fetchPier17Data,
-  fetchCentralParkData
-} = require('./fetch')
+import { fetchNoaaData, fetchPier17Data, fetchCentralParkData } from './fetch.mjs'
 
-const {
-  getSamples,
-  storeRawData,
-  getDataSets
-} = require('./data')
+import { getSamples, storeRawData, getDataSets }  from './data.mjs'
 
 if (!('AWS_ACCESS_KEY_ID' in process.env)) throw new Error('Missing AWS_ACCESS_KEY_ID')
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
@@ -45,7 +37,9 @@ const retrieveDataSets = async () => {
     centralParkData
   })
 
-  storeDataSetsToFile(getDataSets())
+  const dataSets = await getDataSets()
+  
+  storeDataSetsToFile(dataSets)
 }
 
 const storeDataSetsToFile = (dataSets) => {
@@ -53,7 +47,7 @@ const storeDataSetsToFile = (dataSets) => {
     const path = `${rangeName}_samples.json`
 
     const json = JSON.stringify(dataSets[rangeName], null, 2)
-    const gzipJson = pako.gzip(json)
+    const gzipJson = gzip(json)
 
     // If we do not have aws credentials, write to local filesystem
     if (!accessKeyId || !secretAccessKey) {
@@ -98,7 +92,7 @@ const uploadFile = async () => {
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = JSON.stringify(samples, null, 2)
-  const gzipJson = pako.gzip(json)
+  const gzipJson = gzip(json)
 
   // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {

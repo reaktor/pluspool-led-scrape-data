@@ -7,16 +7,20 @@
  * @returns {Object} Array of samples
  */
 
-const pkg = require('./package.json')
-const rainToBacteria = require('@reaktor/predicted-mpn')
+import packageJson from './package.json' assert { type: "json" }
+const { version } = packageJson
 
-const { open } = require('sqlite')
+import rainToBacteria from '@reaktor/predicted-mpn'
 
-const moment = require('moment')
-const R = require('ramda')
-const db = await open({filename: ':memory:'})
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
 
-const maps = {
+import moment from 'moment'
+import { range, splitEvery, mean, prop } from 'ramda'
+
+const db = await open({filename: ':memory:', driver: sqlite3.Database})
+
+export const maps = {
   noaaData: {
     noaaTime: 't',
     speed: 's',
@@ -111,7 +115,7 @@ const select = (source, map) =>
     }))
   )
 
-const storeRawData = async sources => {
+export const storeRawData = async sources => {
   await createTables()
 
   const noaaData = sources.noaaData.data?.map(entry => {
@@ -153,27 +157,27 @@ const storeRawData = async sources => {
   storeData('centralPark', centralParkData)
 }
 
-const getDataSets = () => {
+export const getDataSets = async () => {
   return {
-    year: getSampleRange({
+    year: await getSampleRange({
       name: 'year',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 2,
       days: 365
     }),
-    month: getSampleRange({
+    month: await getSampleRange({
       name: 'month',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 4,
       days: 30
     }),
-    week: getSampleRange({
+    week: await getSampleRange({
       name: 'week',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 8,
       days: 7
     }),
-    day: getSampleRange({
+    day: await getSampleRange({
       name: 'day',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
@@ -182,25 +186,26 @@ const getDataSets = () => {
   }
 }
 
-const getSampleRange = ({ tables, name, ...other }) => {
+const getSampleRange = async ({ tables, name, ...other }) => {
   const samples = {
     units,
     name
   }
-  tables.forEach(table => {
-    const downsampledData = getDownsampledData({
+  for (table in tables) {
+  
+    const downsampledData = await getDownsampledData({
       tableName: table,
       ...other
     })
     samples[`${table}Samples`] = downsampledData
-  })
+  }
   return samples
 }
 
-const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
+const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
 
-  for (day in R.range(0, days).reverse()) {
+  for (day in range(0, days).reverse()) {
     const dayResults = await db.prepare(
       `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
     )
@@ -215,11 +220,11 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
     if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
       downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
     }
-    const splittedResults = samplesPerDayIndex > 0 ? R.splitEvery(samplesPerDayIndex, results) : [results]
+    const splittedResults = samplesPerDayIndex > 0 ? splitEvery(samplesPerDayIndex, results) : [results]
     const averagedResults = splittedResults.map(samples => {
       const averagedResult = {}
       Object.keys(samples[0]).forEach(key => {
-        averagedResult[key] = R.mean(samples.map(R.prop(key)))
+        averagedResult[key] = mean(samples.map(prop(key)))
       })
       averagedResult.timestamp = samples[0].timestamp
       return averagedResult
@@ -230,7 +235,7 @@ const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
   return downsampled
 }
 
-const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
+export const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting fetched data to samples')
   const sourcemap = {
     noaaData:
@@ -309,7 +314,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting samples complete')
 
   return {
-    version: pkg.version,
+    version,
     date: new Date(),
     sources,
     units,
@@ -339,11 +344,4 @@ const deriveSample = ({ stationData, timestamp }) => {
     acc[column] = sample[i]
     return acc
   }, {})
-}
-
-module.exports = {
-  storeRawData,
-  getDataSets,
-  getSamples,
-  maps
 }

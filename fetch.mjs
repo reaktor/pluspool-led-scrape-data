@@ -1,9 +1,9 @@
-const { ENDPOINTS, STREAMS } = require('./constants')
-const fetch = require('isomorphic-unfetch')
-const { get } = require('datagarrison')
-const { encode } = require('querystring')
+import { ENDPOINTS, STREAMS } from './constants.mjs'
+import fetch from 'isomorphic-unfetch'
+import { get } from 'datagarrison'
+import { encode } from 'querystring'
 
-const fetchNoaaData = () => {
+export const fetchNoaaData = () => {
   console.log('Fetching NOAA data')
   const { url, query } = ENDPOINTS.noaaCurrent
   const source = `${url}?${encode(query)}`
@@ -24,18 +24,12 @@ const fetchNoaaData = () => {
     }))
 }
 
-const fetchPier17Data = () => {
+export const fetchPier17Data = () => {
   console.log('Fetching Pier 17 data')
   return get(STREAMS.pier17)
 }
 
-const fetchCentralParkData = () => {
+export const fetchCentralParkData = () => {
   console.log('Fetching Central Park data')
   return get(STREAMS.centralPark)
-}
-
-module.exports = {
-  fetchNoaaData,
-  fetchPier17Data,
-  fetchCentralParkData
 }

@@ -1,4 +1,5 @@
-const { getSamples } = require('../data')
+import { getSamples } from './data.mjs'
+import { it } from 'vitest'
 
 const centralParkData = {
   name: 'HOBO Weather Station - SN 8388608',
@@ -123,7 +124,7 @@ const noaaData = {
   ]
 }
 
-it('gets data', () => {
+it('gets data', ({expect}) => {
   const { samples } = getSamples({ noaaData, pier17Data, centralParkData })
   const firstSample = samples[0]
   const lastSample = samples[samples.length - 1]
