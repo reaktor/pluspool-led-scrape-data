@@ -191,7 +191,7 @@ const getSampleRange = async ({ tables, name, ...other }) => {
     units,
     name
   }
-  for (table in tables) {
+  for (const table in tables) {
   
     const downsampledData = await getDownsampledData({
       tableName: table,
@@ -205,7 +205,7 @@ const getSampleRange = async ({ tables, name, ...other }) => {
 const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
 
-  for (day in range(0, days).reverse()) {
+  for (const day in range(0, days).reverse()) {
     const dayResults = await db.prepare(
       `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
     )
