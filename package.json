@@ -7,7 +7,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "lint:fix": "standard --fix",
+    "format": "standard --fix",
     "test": "vitest --run",
     "test:watch": "vitest"
   },
