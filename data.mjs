@@ -18,7 +18,7 @@ import { open } from 'sqlite'
 import moment from 'moment'
 import { range, splitEvery, mean, prop } from 'ramda'
 
-const db = await open({filename: ':memory:', driver: sqlite3.Database})
+const db = await open({ filename: ':memory:', driver: sqlite3.Database })
 
 export const maps = {
   noaaData: {
@@ -62,32 +62,30 @@ const units = {
 }
 
 const createTables = async () => {
-  const create_noaa_table = 'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
-  const create_noaa_index = 'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
+  const create = [{
+    table: 'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)',
+    index: 'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
+  }, {
+    table: 'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)',
+    index: 'CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)'
+  }, {
+    table: 'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)',
+    index: 'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)',
+  }]
 
-  const create_pier17_table = 'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
-  const create_pier17_index = 'CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)'
-
-  const create_centralPark_table = 'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
-  const create_centralPark_index = 'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'
-
-  await Promise.all([
-    db.run(create_noaa_table).then(() => db.run(create_noaa_index)),
-    db.run(create_pier17_table).then(() => db.run(create_pier17_index)),
-    db.run(create_centralPark_table).then(() => db.run(create_centralPark_index)),
-  ])
+  await Promise.all(create.map(({ table, index }) => db.run(table).then(() => db.run(index))))
 }
 
 const storeData = async (tableName, data) => {
   const keys = Object.keys(maps[`${tableName}Data`])
   const keyIsNotTimestamp = key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key)
-  
+
   const keysWithoutTimestamp = keys.filter(keyIsNotTimestamp)
 
   const lastEntry = await db.get(`SELECT * FROM ? ORDER BY "timestamp" DESC`, tableName)
 
   const insert = await db.prepare(
-    `INSERT INTO "?"(timestamp, ?}) VALUES(@?)`,
+    `INSERT INTO ?(timestamp, ?}) VALUES(@?)`,
     tableName,
     keysWithoutTimestamp.join(', '),
     keys.join(',@'),
@@ -97,7 +95,7 @@ const storeData = async (tableName, data) => {
   const entries = data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp)
 
   entries.forEach(entry => insert.run(entry))
-   
+
 }
 
 const getSource = (key, sourcemap) => {
@@ -194,13 +192,13 @@ const getSampleRange = async ({ tables, name, ...other }) => {
     units,
     name
   }
-  for (const table in tables) {
-  
+
+  for (const tableName of tables) {
     const downsampledData = await getDownsampledData({
-      tableName: table,
+      tableName,
       ...other
     })
-    samples[`${table}Samples`] = downsampledData
+    samples[`${tableName}Samples`] = downsampledData
   }
   return samples
 }
@@ -208,15 +206,14 @@ const getSampleRange = async ({ tables, name, ...other }) => {
 const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
 
-  for (const day in range(0, days).reverse()) {
-    const dayResults = await db.prepare(
-      `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
-    )
-    
-    const startDay = moment().subtract(day + 1, 'days').unix()
-    const endDay = moment().subtract(day, 'days').unix()
+  const query = 'SELECT * FROM $tableName WHERE timestamp > $startDay AND timestamp < $endDay ORDER BY timestamp DESC;'
 
-    const results = await dayResults.all(startDay, endDay)
+  for (const day of range(0, days).reverse()) {
+    const $startDay = moment().subtract(day + 1, 'days').unix()
+    const $endDay = moment().subtract(day, 'days').unix()
+    console.log({query})
+    const results = await db.all(query, {$tableName: tableName, $startDay, $endDay})
+    console.log({result})
 
     if (results.length === 0) return // skip if ther is no data for that day
     const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)

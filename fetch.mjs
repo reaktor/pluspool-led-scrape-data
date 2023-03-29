@@ -13,7 +13,6 @@ const throwJsonErrors = (json) => {
 
 const mapTimeDataToGMT = (json) => ({
   ...json,
-  source,
   data: json.data?.map(datum => ({ ...datum, t: `${datum.t} GMT` }))
 })
 
@@ -21,7 +20,7 @@ export const fetchNoaaData = () => {
   console.log('Fetching NOAA data')
   const { url, query } = ENDPOINTS.noaaCurrent
   const source = new URL(url)
-  url.search = new URLSearchParams(query)
+  source.search = new URLSearchParams(query)
 
   return fetch(source, { method: 'GET' })
     .then(parseJson)
