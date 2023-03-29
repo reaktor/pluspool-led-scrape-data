@@ -1,4 +1,4 @@
-const ENDPOINTS = {
+export const ENDPOINTS = {
   noaaCurrent: {
     url: 'https://tidesandcurrents.noaa.gov/api/prod/datagetter',
     query: {
@@ -12,7 +12,7 @@ const ENDPOINTS = {
   }
 }
 
-const STREAMS = {
+export const STREAMS = {
   pier17: {
     user: 1105898,
     stream: 351579054854409
@@ -21,9 +21,4 @@ const STREAMS = {
     user: 1105898,
     stream: 356136071740874
   }
-}
-
-module.exports = {
-  ENDPOINTS,
-  STREAMS
 }

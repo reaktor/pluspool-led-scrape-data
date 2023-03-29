@@ -7,14 +7,20 @@
  * @returns {Object} Array of samples
  */
 
-const pkg = require('./package.json')
-const rainToBacteria = require('@reaktor/predicted-mpn')
-const Database = require('better-sqlite3')
-const moment = require('moment')
-const R = require('ramda')
-const db = new Database('database.db')
+import packageJson from './package.json' assert { type: "json" }
+const { version } = packageJson
 
-const maps = {
+import rainToBacteria from '@reaktor/predicted-mpn'
+
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
+
+import moment from 'moment'
+import { range, splitEvery, mean, prop } from 'ramda'
+
+const db = await open({filename: ':memory:', driver: sqlite3.Database})
+
+export const maps = {
   noaaData: {
     noaaTime: 't',
     speed: 's',
@@ -55,45 +61,40 @@ const units = {
   bacteria: 'MPN'
 }
 
-const setupDb = () => {
-  db.prepare(
-    'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
-  ).run()
-  db.prepare(
-    'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
-  ).run()
-  db.prepare(
-    'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
-  ).run()
-  db.prepare(
-    'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
-  ).run()
-  db.prepare(
-    'CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)'
-  ).run()
-  db.prepare(
-    'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'
-  ).run()
+const createTables = async () => {
+  await Promise.all([
+    db.run(
+      'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
+    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)')),
+    db.run(
+      'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
+    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)')),
+    db.run(
+      'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
+    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'))
+  ])
 }
 
-const storeData = (tableName, data) => {
+const storeData = async (tableName, data) => {
   const keys = Object.keys(maps[`${tableName}Data`])
-  const keysFiltered = Object.keys(maps[`${tableName}Data`]).filter(
-    key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key)
+  const keyIsNotTimestamp = key => !['noaaTime', 'pier17Time', 'centralParkTime'].includes(key)
+  
+  const keysWithoutTimestamp = keys.filter(keyIsNotTimestamp)
+
+  const lastEntry = await db.get(`SELECT * FROM ? ORDER BY "timestamp" DESC`, tableName)
+
+  const insert = await db.prepare(
+    `INSERT INTO "?"(timestamp, ?}) VALUES(@?)`,
+    tableName,
+    keysWithoutTimestamp.join(', '),
+    keys.join(',@'),
   )
-  const lastEntry = db
-    .prepare(`SELECT * FROM "${tableName}" ORDER BY "timestamp" DESC`)
-    .get()
-  const insert = db.prepare(
-    `INSERT INTO "${tableName}"(timestamp, ${keysFiltered.join(
-      ', '
-    )}) VALUES(@${keys.join(',@')})`
-  )
-  const insertMany = db.transaction(entries => {
-    for (const entry of entries) insert.run(entry)
-  })
-  insertMany(
-    data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp))
+
+  // TODO: batch insert
+  const entries = data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp)
+
+  entries.forEach(entry => insert.run(entry))
+   
 }
 
 const getSource = (key, sourcemap) => {
@@ -114,9 +115,8 @@ const select = (source, map) =>
     }))
   )
 
-const storeRawData = sources => {
-  setupDb()
-  console.log('store data to DB')
+export const storeRawData = async sources => {
+  await createTables()
 
   const noaaData = sources.noaaData.data?.map(entry => {
     return {
@@ -157,27 +157,27 @@ const storeRawData = sources => {
   storeData('centralPark', centralParkData)
 }
 
-const getDataSets = () => {
+export const getDataSets = async () => {
   return {
-    year: getSampleRange({
+    year: await getSampleRange({
       name: 'year',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 2,
       days: 365
     }),
-    month: getSampleRange({
+    month: await getSampleRange({
       name: 'month',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 4,
       days: 30
     }),
-    week: getSampleRange({
+    week: await getSampleRange({
       name: 'week',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 8,
       days: 7
     }),
-    day: getSampleRange({
+    day: await getSampleRange({
       name: 'day',
       tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
@@ -185,58 +185,57 @@ const getDataSets = () => {
     })
   }
 }
-const getSampleRange = ({ tables, name, ...other }) => {
+
+const getSampleRange = async ({ tables, name, ...other }) => {
   const samples = {
     units,
     name
   }
-  tables.forEach(table => {
-    const downsampledData = getDownsampledData({
+  for (table in tables) {
+  
+    const downsampledData = await getDownsampledData({
       tableName: table,
       ...other
     })
     samples[`${table}Samples`] = downsampledData
-  })
+  }
   return samples
 }
 
-const getDownsampledData = ({ tableName, samplesPerDay, days }) => {
+const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
   let downsampled = []
-  R.range(0, days)
-    .reverse()
-    .forEach(day => {
-      const results = db
-        .prepare(
-          `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
-        )
-        .all(
-          `${moment()
-            .subtract(day + 1, 'days')
-            .unix()}`,
-          `${moment()
-            .subtract(day, 'days')
-            .unix()}`
-        )
-      if (results.length === 0) return // skip if ther is no data for that day
-      const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
-      if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
-        downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
-      }
-      const splittedResults = samplesPerDayIndex > 0 ? R.splitEvery(samplesPerDayIndex, results) : [results]
-      const averagedResults = splittedResults.map(samples => {
-        const averagedResult = {}
-        Object.keys(samples[0]).forEach(key => {
-          averagedResult[key] = R.mean(samples.map(R.prop(key)))
-        })
-        averagedResult.timestamp = samples[0].timestamp
-        return averagedResult
+
+  for (day in range(0, days).reverse()) {
+    const dayResults = await db.prepare(
+      `SELECT * FROM  "${tableName}" WHERE "timestamp" > ? AND "timestamp" < ? ORDER BY "timestamp" DESC`
+    )
+    
+    const startDay = moment().subtract(day + 1, 'days').unix()
+    const endDay = moment().subtract(day, 'days').unix()
+
+    const results = await dayResults.all(startDay, endDay)
+
+    if (results.length === 0) return // skip if ther is no data for that day
+    const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
+    if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
+      downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
+    }
+    const splittedResults = samplesPerDayIndex > 0 ? splitEvery(samplesPerDayIndex, results) : [results]
+    const averagedResults = splittedResults.map(samples => {
+      const averagedResult = {}
+      Object.keys(samples[0]).forEach(key => {
+        averagedResult[key] = mean(samples.map(prop(key)))
       })
-      downsampled = downsampled.concat(averagedResults)
+      averagedResult.timestamp = samples[0].timestamp
+      return averagedResult
     })
+    downsampled = downsampled.concat(averagedResults)
+  }
+
   return downsampled
 }
 
-const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
+export const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting fetched data to samples')
   const sourcemap = {
     noaaData:
@@ -315,7 +314,7 @@ const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
   console.log('Converting samples complete')
 
   return {
-    version: pkg.version,
+    version,
     date: new Date(),
     sources,
     units,
@@ -345,11 +344,4 @@ const deriveSample = ({ stationData, timestamp }) => {
     acc[column] = sample[i]
     return acc
   }, {})
-}
-
-module.exports = {
-  storeRawData,
-  getDataSets,
-  getSamples,
-  maps
 }

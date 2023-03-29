@@ -1,17 +1,9 @@
-const pako = require('pako')
-const { S3Client, PutObjectCommand, CopyObjectCommand } = require("@aws-sdk/client-s3")
+import { gzip } from 'pako'
+import { S3Client, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3"
 
-const {
-  fetchNoaaData,
-  fetchPier17Data,
-  fetchCentralParkData
-} = require('./fetch')
+import { fetchNoaaData, fetchPier17Data, fetchCentralParkData } from './fetch.mjs'
 
-const {
-  getSamples,
-  storeRawData,
-  getDataSets
-} = require('./data')
+import { getSamples, storeRawData, getDataSets }  from './data.mjs'
 
 if (!('AWS_ACCESS_KEY_ID' in process.env)) throw new Error('Missing AWS_ACCESS_KEY_ID')
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID
@@ -33,19 +25,21 @@ const params = {
 const s3Client = new S3Client({ region: 'us-east-2'})
 
 const retrieveDataSets = async () => {
-  await Promise.all([
+  const [noaaData, pier17Data, centralParkData] = await Promise.all([
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData())
   ])
-    .then(([noaaData, pier17Data, centralParkData]) => {
-      storeRawData({
-        noaaData,
-        pier17Data,
-        centralParkData
-      })
-      storeDataSetsToFile(getDataSets())
-    })
+   
+  await storeRawData({
+    noaaData,
+    pier17Data,
+    centralParkData
+  })
+
+  const dataSets = await getDataSets()
+  
+  storeDataSetsToFile(dataSets)
 }
 
 const storeDataSetsToFile = (dataSets) => {
@@ -53,7 +47,7 @@ const storeDataSetsToFile = (dataSets) => {
     const path = `${rangeName}_samples.json`
 
     const json = JSON.stringify(dataSets[rangeName], null, 2)
-    const gzipJson = pako.gzip(json)
+    const gzipJson = gzip(json)
 
     // If we do not have aws credentials, write to local filesystem
     if (!accessKeyId || !secretAccessKey) {
@@ -63,8 +57,8 @@ const storeDataSetsToFile = (dataSets) => {
         console.log(`Samples written to '${path}'`)
       })
     } else {
-      console.log('uplodaing to S3')
-      await uploadToS3(path, gzipJson)
+      console.log('uploading to S3')
+      //await uploadToS3(path, gzipJson)
     }
   })
 }
@@ -98,7 +92,7 @@ const uploadFile = async () => {
   const path = 'samples.json'
   const archivePath = path.replace('samples', samples.date.toJSON())
   const json = JSON.stringify(samples, null, 2)
-  const gzipJson = pako.gzip(json)
+  const gzipJson = gzip(json)
 
   // If we do not have aws credentials, write to local filesystem
   if (!accessKeyId || !secretAccessKey) {
