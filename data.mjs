@@ -62,16 +62,19 @@ const units = {
 }
 
 const createTables = async () => {
+  const create_noaa_table = 'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
+  const create_noaa_index = 'CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)'
+
+  const create_pier17_table = 'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
+  const create_pier17_index = 'CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)'
+
+  const create_centralPark_table = 'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
+  const create_centralPark_index = 'CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'
+
   await Promise.all([
-    db.run(
-      'CREATE TABLE IF NOT EXISTS noaa(timestamp NUMERIC, speed NUMERIC, direction NUMERIC)'
-    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "noaa_timestamp" ON noaa(timestamp)')),
-    db.run(
-      'CREATE TABLE IF NOT EXISTS pier17(timestamp NUMERIC, oxygen NUMERIC, salinity NUMERIC, turbidity NUMERIC, ph NUMERIC, depth NUMERIC, temperature NUMERIC)'
-    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "pier17_timestamp" ON pier17(timestamp)')),
-    db.run(
-      'CREATE TABLE IF NOT EXISTS centralPark(timestamp NUMERIC, rain NUMERIC, bacteria NUMERIC)'
-    ).then(() => db.run('CREATE INDEX IF NOT EXISTS "centralPark_timestamp" ON centralPark(timestamp)'))
+    db.run(create_noaa_table).then(() => db.run(create_noaa_index)),
+    db.run(create_pier17_table).then(() => db.run(create_pier17_index)),
+    db.run(create_centralPark_table).then(() => db.run(create_centralPark_index)),
   ])
 }
 
