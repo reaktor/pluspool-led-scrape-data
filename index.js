@@ -25,7 +25,7 @@ const params = {
 const s3Client = new S3Client({ region: 'us-east-2'})
 
 const retrieveDataSets = async () => {
-  const [noaaData, pier17Data, centralParkData] = await Promise.all([
+  await Promise.all([
     Promise.resolve(fetchNoaaData()),
     Promise.resolve(fetchPier17Data()),
     Promise.resolve(fetchCentralParkData())
@@ -57,8 +57,8 @@ const storeDataSetsToFile = (dataSets) => {
         console.log(`Samples written to '${path}'`)
       })
     } else {
-      console.log('uploading to S3')
-      //await uploadToS3(path, gzipJson)
+      console.log('uplodaing to S3')
+      await uploadToS3(path, gzipJson)
     }
   })
 }
