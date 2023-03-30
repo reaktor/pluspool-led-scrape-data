@@ -8,6 +8,11 @@ on:
 jobs:
   scrape-data:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 18.x ]
+
     steps:
       - name: checkout code
         uses: actions/checkout@v3
