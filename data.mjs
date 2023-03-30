@@ -82,20 +82,17 @@ const storeData = async (tableName, data) => {
 
   const keysWithoutTimestamp = keys.filter(keyIsNotTimestamp)
 
-  const lastEntry = await db.get(`SELECT * FROM ? ORDER BY "timestamp" DESC`, tableName)
-
-  const insert = await db.prepare(
-    `INSERT INTO ?(timestamp, ?}) VALUES(@?)`,
-    tableName,
-    keysWithoutTimestamp.join(', '),
-    keys.join(',@'),
-  )
+  // FIXME: This has injection attack written all over it. Passing in params failed for some reason.
+  const lastEntry = await db.get(`SELECT * FROM ${tableName} ORDER BY timestamp DESC`)
+  const insertStatement = `INSERT INTO ${tableName}(timestamp, ${keysWithoutTimestamp.join(', ')}) VALUES(@${keys.join(', @')})`
+  const insert = await db.prepare(insertStatement)
 
   // TODO: batch insert
   const entries = data.filter(row => lastEntry == null || Date.parse(row[keys[0]]) > lastEntry.timestamp)
 
-  entries.forEach(entry => insert.run(entry))
-
+  for (const entry of entries) {
+    await insert.run(entry)
+  }
 }
 
 const getSource = (key, sourcemap) => {
@@ -162,60 +159,59 @@ export const getDataSets = async () => {
   return {
     year: await getSampleRange({
       name: 'year',
-      tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 2,
       days: 365
     }),
     month: await getSampleRange({
       name: 'month',
-      tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 4,
       days: 30
     }),
     week: await getSampleRange({
       name: 'week',
-      tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 8,
       days: 7
     }),
     day: await getSampleRange({
       name: 'day',
-      tables: ['noaa', 'pier17', 'centralPark'],
       samplesPerDay: 96,
       days: 1
     })
   }
 }
 
-const getSampleRange = async ({ tables, name, ...other }) => {
-  const samples = {
-    units,
-    name
-  }
+const getSampleRange = async ({ name, samplesPerDay, days }) => ({
+  name,
+  units,
+  noaaSamples: await getDownsampledData({
+    table: 'noaa',
+    samplesPerDay,
+    days
+  }),
+  pier17Samples: await getDownsampledData({
+    table: 'pier17',
+    samplesPerDay,
+    days
+  }),
+  centralParkSamples: await getDownsampledData({
+    table: 'centralPark',
+    samplesPerDay,
+    days
+  }),
+})
 
-  for (const tableName of tables) {
-    const downsampledData = await getDownsampledData({
-      tableName,
-      ...other
-    })
-    samples[`${tableName}Samples`] = downsampledData
-  }
-  return samples
-}
-
-const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
+const getDownsampledData = async ({ table, samplesPerDay, days }) => {
   let downsampled = []
 
-  const query = 'SELECT * FROM $tableName WHERE timestamp > $startDay AND timestamp < $endDay ORDER BY timestamp DESC;'
-
   for (const day of range(0, days).reverse()) {
-    const $startDay = moment().subtract(day + 1, 'days').unix()
-    const $endDay = moment().subtract(day, 'days').unix()
-    console.log({query})
-    const results = await db.all(query, {$tableName: tableName, $startDay, $endDay})
-    console.log({result})
+    const startDay = moment().subtract(day + 1, 'days').unix()
+    const endDay = moment().subtract(day, 'days').unix()
+    // FIXME: Injection
+    const query = `SELECT * FROM ${table} WHERE timestamp > ${startDay} AND timestamp < ${endDay} ORDER BY timestamp DESC`
+    const results = await db.all(query)
+    console.log({results})
 
-    if (results.length === 0) return // skip if ther is no data for that day
+    if (results.length === 0) break // skip if there is no data for that day
     const samplesPerDayIndex = Math.floor(results.length / samplesPerDay)
     if (samplesPerDayIndex === 0) { // not enough samples for the desired sample rate
       downsampled = downsampled.concat(results) // could also try a lower sample rate if this seems to be too much
@@ -232,11 +228,13 @@ const getDownsampledData = async ({ tableName, samplesPerDay, days }) => {
     downsampled = downsampled.concat(averagedResults)
   }
 
+  console.log({downsampled})
+
   return downsampled
 }
 
 export const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
-  console.log('Converting fetched data to samples')
+  console.log('converting fetched data to samples')
   const sourcemap = {
     noaaData:
       'https://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020&bin=0&unit=1&timeZone=UTC&view=data',
@@ -310,8 +308,6 @@ export const getSamples = ({ noaaData, pier17Data, centralParkData }) => {
       [key]: getSource(key, sourcemap)
     }))
   )
-
-  console.log('Converting samples complete')
 
   return {
     version,
