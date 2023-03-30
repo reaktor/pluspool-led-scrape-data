@@ -5,6 +5,10 @@
   "private": true,
   "type": "module",
   "main": "index.js",
+  "engines": {
+    "npm": "8",
+    "node": "18"
+  },
   "scripts": {
     "lint": "standard",
     "lint:fix": "standard --fix",
