@@ -2,8 +2,8 @@ name: scrape data
 run-name: ${{ github.actor }} is scraping and uploading data to s3
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "*/6 * * * *"
+#   schedule:
+#     - cron: "*/6 * * * *"
 
 jobs:
   scrape-data:
